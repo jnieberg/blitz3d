@@ -1,8 +1,11 @@
-function LoadFont(family, size, weight, italic, underlined) {
+function LoadFont(family, size, bold, italic, underline) {
 	if (_graphicsContext) {
-		const weightS = weight ? 'bold' : '';
-		const italicS = italic ? 'italic' : '';
-		const underlinedS = underlined ? 'underline' : '';
-		return `${italicS} ${weightS} ${size}px "${family}"`;
+		return {
+			family: family,
+			size: size,
+			bold: bold,
+			italic: italic,
+			underline: underline
+		};
 	}
 }

@@ -1,20 +1,11 @@
-Cls
-Graphics 800,600,16,1
-Print "Dit is een test"
+; KeyDown() example
 
-functie()
-
-Function functie()
-	a=1
-	key = WaitKey()
-	If key = 32 Then
-		Print "Spatie " + key
-	Else
-		Print "Dit is ook een test " + key
-	End If
-	If key = 40 Then Print "Hoi"
-	key = WaitKey()
-	Print "Dit is ook een test123" + key
-End Function
-
-a=2
+Print "Hold down ENTER key!"
+Delay 3000
+While Not KeyHit(1)
+If KeyDown(28) Then 
+Print "Enter is being pressed!"
+Else
+Print 
+End If
+Wend 

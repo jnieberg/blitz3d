@@ -1,6 +1,8 @@
+var _colorRGB = 'rgb(255, 255, 255)';
 function Color(r, g, b) {
 	if (_graphicsContext) {
-		_graphicsContext.fillStyle = 'rgb(' + r + ', ' + g + ', ' + b + ')';
-		_graphicsContext.strokeStyle = 'rgb(' + r + ', ' + g + ', ' + b + ')';
+		_colorRGB = 'rgb(' + r + ', ' + g + ', ' + b + ')';
+		// _graphicsContext.fillStyle = _colorRGB;
+		// _graphicsContext.strokeStyle = _colorRGB;
 	}
 }

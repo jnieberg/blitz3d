@@ -1,12 +1,22 @@
+var _keyHitTimes = [];
 function KeyHit(code) {
-	var _waitKeyEvent = '';
-	document.addEventListener('keydown', (event) => {
-		_waitKeyEvent = event.code;
-	});
+	var _keyHitEvent = undefined;
+	function getCode(event) {
+		_keyHitEvent = event;
+		const result = _scancode.indexOf(_keyHitEvent.code) === -1 ? 0 : _scancode.indexOf(_keyHitEvent.code);
+		_keyHitTimes[result] = (_keyHitTimes[result] || 0) + 1;
+	}
+	document.addEventListener('keyup', getCode);
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
-			resolve(_scancode.indexOf(_waitKeyEvent) === code);
-			_waitKeyEvent = '';
+			if (_keyHitEvent) {
+				document.removeEventListener('keyup', getCode);
+				resolve(_keyHitTimes[code] || 0);
+				_keyHitTimes = [];
+				_keyHitEvent = undefined;
+			} else {
+				resolve(0);
+			}
 		});
 	});
 }
