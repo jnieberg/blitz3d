@@ -1,3 +1,3 @@
-function Chr$(code) {
+function chr$(code) {
 	return String.fromCharCode(code);
 }

@@ -1,11 +1,12 @@
 var _setFontCurrent = {
-	family: 'arial',
-	size: 16,
+	family: 'courier new',
+	size: 13,
+	height: 13,
 	bold: false,
 	italic: false,
 	underline: false
 };
-function SetFont(font) {
+function setfont(font) {
 	if (_graphicsContext) {
 		_setFontCurrent = font;
 		const weightS = font.bold ? 'bold' : '';

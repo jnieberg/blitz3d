@@ -1,5 +1,5 @@
 Cls
-Graphics 800,600,16,0
+Graphics 800,600,16,1
 Print "Welke kleur is het lichtst?"
 SeedRnd MilliSecs()
 Global r1, r2, r3
@@ -15,7 +15,6 @@ Select w2
 	Case 1: If res = r1 Then juich()
 	Case 2: If res = r2 Then juich()
 	Case 3: If res = r3 Then juich()
-	Default: Print "Not happening!"
 End Select
 
 Function getMax(a,b)

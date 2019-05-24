@@ -1,5 +1,5 @@
 var _keyHitTimes = [];
-function KeyHit(code) {
+function keyhit(code) {
 	var _keyHitEvent = undefined;
 	function getCode(event) {
 		_keyHitEvent = event;

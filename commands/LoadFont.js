@@ -1,11 +1,10 @@
-function LoadFont(family, size, bold, italic, underline) {
-	if (_graphicsContext) {
-		return {
-			family: family,
-			size: size,
-			bold: bold,
-			italic: italic,
-			underline: underline
-		};
-	}
+function loadfont(family, size, bold, italic, underline) {
+	return {
+		family: family,
+		size: size,
+		height: size,
+		bold: bold,
+		italic: italic,
+		underline: underline
+	};
 }

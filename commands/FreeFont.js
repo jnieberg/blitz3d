@@ -1,4 +1,4 @@
-function FreeFont(font) {
+function freefont(font) {
 	if (_setFontCurrent === font) {
 		_setFontCurrent = {
 			family: 'arial',

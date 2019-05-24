@@ -1,5 +1,5 @@
 var _seedRndRandomFn;
-function SeedRnd(num) {
+function seedrnd(num) {
 	function xmur3(number) {
 		var str = String(number);
 		for (var i = 0, h = 1779033703 ^ str.length; i < str.length; i++) {
@@ -23,18 +23,4 @@ function SeedRnd(num) {
 	var seed = xmur3(num);
 	_seedRndRandomFn = mulberry32(seed());
 }
-function Rnd(start, end) {
-	if (typeof start === 'undefined') {
-		start = 0;
-		end = 1;
-	}
-	if (typeof end === 'undefined') {
-		end = start;
-		start = 0;
-	}
-	return _seedRndRandomFn() * (end + 1) + start;
-}
-function Rand(start, end) {
-	return Math.floor(Rnd(start, end));
-}
-SeedRnd(0);
+seedrnd(0);

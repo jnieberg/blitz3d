@@ -1,4 +1,4 @@
-function Rect(x, y, w, h, solid) {
+function rect(x, y, w, h, solid) {
 	if (solid) {
 		_graphicsContext.fillStyle = _colorRGB;
 		_graphicsContext.fillRect(x, y, w, h);

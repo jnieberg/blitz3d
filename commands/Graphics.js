@@ -1,7 +1,8 @@
 var _graphicsCanvas;
 var _graphicsContext;
-var _graphicsFontSize = 16;
-function Graphics(width, height, colours, mode) {
+// var _graphicsFontSize = 13;
+// var _graphicsLineHeight = _graphicsFontSize;
+function graphics(width, height, colours, mode) {
 	const canvasOld = document.querySelector('#blitz');
 	if (canvasOld) {
 		canvasOld.remove();
@@ -9,11 +10,10 @@ function Graphics(width, height, colours, mode) {
 	document.body.innerHTML = '<canvas id="blitz" width="' + width + '" height="' + height + '"></canvas><pre id="console"></pre>';
 	_graphicsCanvas = document.querySelector('#blitz');
 	_graphicsContext = _graphicsCanvas.getContext('2d');
-	Cls();
-	font = LoadFont('arial', 16, false, false, false);
-	SetFont(font);
-	// _graphicsContext.font = _graphicsFontSize + 'px Arial';
+	cls();
+	font = loadfont('courier new', 13, false, false, false);
+	setfont(font);
 	_graphicsContext.textBaseline = 'top';
 	_graphicsContext.textAlign = 'left';
 }
-Graphics(800, 600, 32, 1);
+graphics(400, 300, 32, 1);

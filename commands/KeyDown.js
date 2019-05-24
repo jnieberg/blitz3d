@@ -1,20 +1,22 @@
 var _keyDownBoolean = 0;
-function KeyDown(code) {
+function keydown(code) {
 	var _keyDownEvent = undefined;
 	function getKeyDown(event) {
 		_keyDownEvent = event;
-		_keyDownBoolean = 1;
+		const result = _scancode.indexOf(_keyDownEvent.code) === -1 ? 0 : _scancode.indexOf(_keyDownEvent.code);
+		if (result === code) {
+			_keyDownBoolean = 1;
+		}
 	}
 	function removeKeyDown(event) {
-		_keyDownEvent = event;
-		_keyDownBoolean = 0;
 		_keyDownEvent = undefined;
+		_keyDownBoolean = 0;
 	}
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
 			document.addEventListener('keydown', getKeyDown);
 			document.addEventListener('keyup', removeKeyDown);
 			resolve(_keyDownBoolean);
-		}, 10);
+		});
 	});
 }
