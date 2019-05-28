@@ -1,4 +1,4 @@
-function rnd(start, end, float) {
+function _rnd(start, end, float) {
 	if (typeof start === 'undefined') {
 		start = 0;
 		end = 1;

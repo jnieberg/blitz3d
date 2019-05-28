@@ -1,4 +1,4 @@
-function print(txt = '', fix) {
+function _print(txt = '', fix) {
 	if (_graphicsContext) {
 		if (_printY + _setFontCurrent.height > _graphicsCanvas.height) {
 			_saveScreen();

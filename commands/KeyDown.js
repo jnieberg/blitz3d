@@ -1,5 +1,5 @@
 var _keyDownBoolean = 0;
-function keydown(code) {
+function _keydown(code) {
 	var _keyDownEvent = undefined;
 	function getKeyDown(event) {
 		_keyDownEvent = event;

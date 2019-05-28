@@ -9,6 +9,10 @@ function _loadScreen(xOff, yOff) {
 	if (!_backupScreenImg) {
 		_saveScreen();
 	}
-	cls();
+	_cls();
 	_graphicsContext.putImageData(_backupScreenImg, x, y);
+}
+
+function _refreshClass(Cls) {
+	window['_var_' + Cls.name].map((res, index) => res._index = index);
 }

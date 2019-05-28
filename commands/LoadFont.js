@@ -1,4 +1,4 @@
-function loadfont(family, size, bold, italic, underline) {
+function _loadfont(family, size, bold, italic, underline) {
 	return {
 		family: family,
 		size: size,

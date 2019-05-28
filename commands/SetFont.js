@@ -6,7 +6,7 @@ var _setFontCurrent = {
 	italic: false,
 	underline: false
 };
-function setfont(font) {
+function _setfont(font) {
 	if (_graphicsContext) {
 		_setFontCurrent = font;
 		const weightS = font.bold ? 'bold' : '';

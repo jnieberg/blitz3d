@@ -1,4 +1,4 @@
-function text(x = 0, y = 0, txt = '', centerX) {
+function _text(x = 0, y = 0, txt = '', centerX) {
 	if (_graphicsContext) {
 		if (centerX) {
 			_graphicsContext.textAlign = 'center';
