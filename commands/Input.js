@@ -1,6 +1,6 @@
 var _inputText = '';
 
-async function _input$(input) {
+async function _input(input) {
 	_inputText = ''
 	_saveScreen();
 	_print(`${input}`, true);

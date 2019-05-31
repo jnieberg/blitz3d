@@ -6,7 +6,7 @@ function _print(txt = '', fix) {
 			_printY = _printY - _setFontCurrent.height;
 		}
 		_graphicsContext.fillStyle = _colorRGB;
-		_graphicsContext.fillText(txt, _printX, _printY);
+		_graphicsContext.fillText(txt, _printX + _originX, _printY + _originY);
 		if (!fix) {
 			_printY = _printY + _setFontCurrent.height;
 		}
