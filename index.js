@@ -122,11 +122,9 @@ _graphics(400, 300, 32, 1);
 try {
 	${result}
 } catch(err) {
-	_debug(err, '#f57');
+	_debuglog(err, '#f57');
 }
-setTimeout(() => {
 ${blitz.endProgram()}
-}, 100);
 })();`);
 		});
 		fStream.on('error', (err) => {
@@ -195,7 +193,7 @@ function _eventTextExecute() {
 				script.innerHTML += 'try {\\n';
 				script.innerHTML += xhr.response + '\\n';
 				script.innerHTML += '} catch(err) {\\n';
-				script.innerHTML += '	_debug(err, \\'#f57\\');\\n';
+				script.innerHTML += '	_debuglog(err, \\'#f57\\');\\n';
 				script.innerHTML += '}\\n';
 				script.innerHTML += 'setTimeout(() => {\\n';
 				script.innerHTML += '${blitz.endProgram().replace(/'/g, '\\\'')}\\n';
@@ -204,7 +202,7 @@ function _eventTextExecute() {
 				scriptContainer.innerHTML = '';
 				scriptContainer.appendChild(script);
 			} catch(err) {
-				_debug(err, '#f57');
+				_debuglog(err, '#f57');
 			}
 		}
 	};

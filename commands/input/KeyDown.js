@@ -13,7 +13,6 @@ function _keydown(code) {
 		setTimeout(() => {
 			document.addEventListener('keydown', getKeyDown);
 			document.addEventListener('keyup', removeKeyDown);
-			console.log(_keyDownThis, _keyDownCheck);
 			resolve(_keyDownThis === _keyDownCheck);
 		});
 	});

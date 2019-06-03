@@ -1,5 +1,24 @@
-number=-3
+;'randomize' the random number generator!
+SeedRnd MilliSecs()
+For k=1 To 2
+Rnd(1)
+Next
 
-Print "The absolute value of " + number + " is: " + Abs(number)
+;capture random number generator state
+state=RndSeed()
+Print "number: " + state
 
-WaitKey()
+;generate a bunch of numbers:
+Print "First set:"
+For k=1 To 5
+Print Rnd(1)
+Next
+
+;restore random nummber generator state
+SeedRnd state
+
+;generate another bunch:
+Print "Second set (same as the first set...):"
+For k=1 To 5
+Print Rnd(1)
+Next 

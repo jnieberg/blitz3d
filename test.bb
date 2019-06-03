@@ -9,11 +9,11 @@ End Type
 For t = 1 To 100 
 alien.crafts = New crafts
 alien\index = t
-alien\x = Rnd(0,640)
+alien\x# = Rnd(0,1)
 Next 
 
 ; Move to the first object
-alien.crafts = Last crafts 
+alien.crafts = First crafts 
 Print alien\index
 Print alien\x
 Print

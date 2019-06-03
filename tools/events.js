@@ -5,4 +5,8 @@ window.onload = () => {
 		_mouseXPosition = event.clientX - rect.left;
 		_mouseYPosition = event.clientY - rect.top;
 	});
+
+	_eventCanvas.oncontextmenu = function (e) {
+		return false;
+	};
 };

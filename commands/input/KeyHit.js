@@ -6,11 +6,11 @@ function _keyhit(code) {
 		const result = _scancode.indexOf(_keyHitEvent.code) === -1 ? 0 : _scancode.indexOf(_keyHitEvent.code);
 		_keyHitTimes[result] = (_keyHitTimes[result] || 0) + 1;
 	}
-	document.addEventListener('keyup', getCode);
+	document.addEventListener('keydown', getCode);
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
 			if (_keyHitEvent) {
-				document.removeEventListener('keyup', getCode);
+				document.removeEventListener('keydown', getCode);
 				resolve(_keyHitTimes[code] || 0);
 				_keyHitTimes = [];
 				_keyHitEvent = undefined;
