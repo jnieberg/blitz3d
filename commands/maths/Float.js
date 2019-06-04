@@ -1,3 +1,3 @@
-function _float(int) {
-	return int.toFixed(5);
+function _float(string) {
+	return parseFloat(String(string));
 }

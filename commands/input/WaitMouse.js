@@ -6,10 +6,10 @@ function _waitmouse() {
 	}
 	function done() {
 		const mouseIndex = [0, 1, 3, 2];
-		document.removeEventListener('mousedown', getCode);
+		_removeAllListeners(document, 'mousedown');
 		return mouseIndex[_waitMouseEvent.which];
 	}
-	document.addEventListener('mousedown', getCode);
+	_addListener(document, 'mousedown', getCode);
 	return new Promise((resolve) => {
 		setInterval(() => {
 			if (_waitMouseEvent) {

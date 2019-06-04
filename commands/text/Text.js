@@ -1,7 +1,9 @@
 function _text(x = 0, y = 0, txt = 0 || '', centerX) {
 	if (_graphicsContext) {
-		if (typeof txt === 'number') {
-			txt = Math.round(txt * 10000) / 10000;
+		if (txt instanceof Float) {
+			txt = txt.float;
+		} else if (typeof txt === 'number') {
+			txt = _roundFloat(txt);
 		}
 		if (centerX) {
 			_graphicsContext.textAlign = 'center';

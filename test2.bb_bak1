@@ -1,24 +1,6 @@
-;'randomize' the random number generator!
-SeedRnd MilliSecs()
-For k=1 To 2
-Rnd(1)
-Next
+; StringWidth/Height Example
 
-;capture random number generator state
-state=RndSeed()
-Print "number: " + state
-
-;generate a bunch of numbers:
-Print "First set:"
-For k=1 To 5
-Print Rnd(1)
-Next
-
-;restore random nummber generator state
-SeedRnd state
-
-;generate another bunch:
-Print "Second set (same as the first set...):"
-For k=1 To 5
-Print Rnd(1)
-Next 
+a$="Hello Shane!"
+Print "A$=" + a$
+Print "This string is "+ StringWidth(a$) + " pixels wide and"
+Print "it is " + StringHeight(a$) + " tall, based on the current font!"

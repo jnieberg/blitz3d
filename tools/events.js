@@ -10,3 +10,7 @@ window.onload = () => {
 		return false;
 	};
 };
+
+window.onerror = (err, url, line) => {
+	_debuglog(`${err} (line ${line})`, '#f57');
+}

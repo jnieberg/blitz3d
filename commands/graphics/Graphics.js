@@ -19,6 +19,9 @@ function _graphics(width, height, colours, mode) {
 		_graphicsContext.textBaseline = 'top';
 		_graphicsContext.textAlign = 'left';
 		_graphicsContext.lineWidth = 1;
+		_printX = 0;
+		_printY = 0;
+		_writeX = 0;
 		_setBufferCanvas[b] = _graphicsCanvas;
 		_setBufferContext[b] = _graphicsContext;
 	}

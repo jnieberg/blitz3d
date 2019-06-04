@@ -119,11 +119,7 @@ function parseRequest(req, res) {
 			const result = blitz.parseBB(body);
 			resp.end(`(async function Main() {
 _graphics(400, 300, 32, 1);
-try {
-	${result}
-} catch(err) {
-	_debuglog(err, '#f57');
-}
+${result}
 ${blitz.endProgram()}
 })();`);
 		});
@@ -175,7 +171,7 @@ var _blitzCode = localStorage.getItem('blitz3d-source');
 if(_blitzCode) {
 	_eventText.value = _blitzCode;
 }
-function _eventTextExecute() {
+function _eventTextExecute(callback = () => {}) {
 	const text = _eventText.value;
 	localStorage.setItem('blitz3d-source', text);
 	const scriptContainer = document.querySelector('#blitzScript');
@@ -184,26 +180,18 @@ function _eventTextExecute() {
   xhr.open('POST', '/run', true);
 	xhr.setRequestHeader('Content-Type', 'text/javascript; charset=UTF-8');
 	xhr.send(text);
-	xhr.onreadystatechange = function() {
+	xhr.onreadystatechange = () => {
 		if (xhr.readyState === 4) {
-			try {
-				var script = document.createElement('script');
-				script.innerHTML += '(async function Main() {\\n';
-				script.innerHTML += '_graphics(400, 300, 32, 1);\\n';
-				script.innerHTML += 'try {\\n';
-				script.innerHTML += xhr.response + '\\n';
-				script.innerHTML += '} catch(err) {\\n';
-				script.innerHTML += '	_debuglog(err, \\'#f57\\');\\n';
-				script.innerHTML += '}\\n';
-				script.innerHTML += 'setTimeout(() => {\\n';
-				script.innerHTML += '${blitz.endProgram().replace(/'/g, '\\\'')}\\n';
-				script.innerHTML += '}, 100);\\n';
-				script.innerHTML += '})();';
-				scriptContainer.innerHTML = '';
-				scriptContainer.appendChild(script);
-			} catch(err) {
-				_debuglog(err, '#f57');
-			}
+			var script = document.createElement('script');
+			script.innerHTML += '(async function Main() {\\n';
+			script.innerHTML += '_graphics(400, 300, 32, 1);\\n';
+			script.innerHTML += xhr.response + '\\n';
+			script.innerHTML += 'setTimeout(() => {\\n';
+			script.innerHTML += '${blitz.endProgram().replace(/'/g, '\\\'')}\\n';
+			script.innerHTML += '}, 100);\\n';
+			script.innerHTML += '})();';
+			scriptContainer.innerHTML = '';
+			scriptContainer.appendChild(script);
 		}
 	};
 }

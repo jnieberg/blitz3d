@@ -1,7 +1,9 @@
 function _print(txt = 0 || '', fix) {
 	if (_graphicsContext) {
-		if (typeof txt === 'number') {
-			txt = Math.round(txt * 10000) / 10000;
+		if (txt instanceof Float) {
+			txt = txt.float;
+		} else if (typeof txt === 'number') {
+			txt = _roundFloat(txt);
 		}
 		if (_printY + _setFontCurrent.height > _graphicsCanvas.height) {
 			_saveScreen();

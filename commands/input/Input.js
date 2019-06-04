@@ -1,5 +1,5 @@
 var _inputText = '';
-
+var _inputTextCursorInterval = undefined;
 async function _input(input) {
 	_inputText = ''
 	_saveScreen();
@@ -14,7 +14,8 @@ async function _input(input) {
 		}, 500);
 	}
 	blink();
-	const cursorTimer = setInterval(() => {
+	clearInterval(_inputTextCursorInterval);
+	_inputTextCursorInterval = setInterval(() => {
 		blink();
 	}, 1000);
 	while (true) {
@@ -23,7 +24,7 @@ async function _input(input) {
 			_inputText = _inputText.slice(0, _inputText.length - 1);
 		} else if (key === 'Enter') {
 			return new Promise((resolve, reject) => {
-				clearInterval(cursorTimer);
+				clearInterval(_inputTextCursorInterval);
 				_loadScreen();
 				_print(`${input}${_inputText}`, true);
 				resolve(_inputText);

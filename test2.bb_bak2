@@ -1,24 +1,22 @@
-;'randomize' the random number generator!
-SeedRnd 0
-For k=1 To 2
-Rnd(1)
-Next
+; FontWidth()/FontHeight example
 
-;capture random number generator state
-state=RndSeed()
-Print "number: " + state
+; enable graphics mode
+Graphics 800,600,16
 
-;generate a bunch of numbers:
-Print "First set:"
-For k=1 To 5
-Print Rnd(1)
-Next
+; Set global on font variable
+Global fntArial
 
-;restore random nummber generator state
-SeedRnd state
+;Load fonts to a file handle variables
+fntArial=LoadFont("Arial",13,False,False,False)
 
-;generate another bunch:
-Print "Second set (same as the first set...):"
-For k=1 To 5
-Print Rnd(1)
-Next 
+; set the font and print sizes
+SetFont fntArial
+Text 400,0,"The font width of the widest character is:"+ FontWidth(),True,False
+Text 400,30,"The height of the font is:"+ FontHeight(),True,False
+
+; Standard 'wait for ESC' from user
+While Not KeyHit(1)
+Wend
+
+; Clear all the fonts from memory!
+FreeFont fntArial
