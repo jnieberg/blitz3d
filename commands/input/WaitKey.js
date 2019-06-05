@@ -1,31 +1,37 @@
-function _waitkey(char) {
-	var _waitKeyEvent = undefined;
+var _waitKeyInterval = undefined;
+var _waitKeyEvent = undefined;
+function _waitKeyGetCode(event) {
+	_waitKeyEvent = event;
+}
+_addListener('keypress', _waitKeyGetCode, 'waitkey');
 
-	function getCode(event) {
-		_waitKeyEvent = event;
-	}
-	function done() {
-		_removeAllListeners(document, 'keydown');
-		return _waitKeyEvent.key.length === 1 ? _asc(_waitKeyEvent.key) : _waitKeyEvent.keyCode;
+function _waitkey(char) {
+
+	function done(key) {
+		const result = key ? _waitKeyEvent.key : _waitKeyEvent.key.length === 1 ? _asc(_waitKeyEvent.key) : _waitKeyEvent.keyCode;
+		_waitKeyEvent = undefined;
+		return result;
 	}
 	function doneKey() {
-		_removeAllListeners(document, 'keydown');
-		return _waitKeyEvent.key;
+		const result = _waitKeyEvent.key;
+		_waitKeyEvent = undefined;
+		return result;
 	}
-	_removeAllListeners(document, 'keydown');
-	_addListener(document, 'keydown', getCode);
 
 	return new Promise((resolve) => {
-		setInterval(() => {
+		_waitKeyInterval = setInterval(() => {
 			if (_waitKeyEvent) {
 				if (char) {
 					if (_waitKeyEvent.location === 0) {
-						resolve(doneKey());
+						clearInterval(_waitKeyInterval);
+						resolve(done(true));
+					} else {
+						_waitKeyEvent = undefined;
 					}
 				} else {
+					clearInterval(_waitKeyInterval);
 					resolve(done());
 				}
-				_waitKeyEvent = undefined;
 			}
 		});
 	});

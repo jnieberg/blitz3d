@@ -36,64 +36,8 @@ function writeHtml(req, body) {
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<script src="/blitz3d.js"></script>
-
+	<link rel="stylesheet" type="text/css" href="css/blitz3d.css">
 	<title>Blitz3D - ${requestUrl.pathname.replace(/^\//, '')}</title>
-	<style>
-	body {
-		margin: 0;
-		background-color: #468;
-		overflow: hidden;
-	}
-
-	#blitz, #blitz2 {
-		background: black;
-		margin: auto;
-    position: absolute;
-    top: 0;
-    bottom: calc(10% + 20px);
-    left: 0;
-    right: 0;
-	}
-	#blitzText {
-		font-family: "Inconsolata","Monaco","Consolas","Andale Mono","Bitstream Vera Sans Mono","Courier New",Courier,monospace;
-		font-size: 13px;
-		position: absolute;
-		width: 30%;
-		height: 100%;
-		padding: 10px;
-		right: 0;
-		top: 0;
-		border: 0;
-	}
-	#blitzText + #blitz {
-		right: calc(30% + 20px);
-	}
-	.debug {
-		position: fixed;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		background: #357;
-    white-space: pre;
-    word-wrap: break-word;
-		overflow: auto;
-    padding: 10px 15px;
-		margin: 0;
-    overflow-x: auto;
-		height: 10%;
-	}
-	.debug code {
-    font-family: "Inconsolata","Monaco","Consolas","Andale Mono","Bitstream Vera Sans Mono","Courier New",Courier,monospace;
-    display: block;
-    font-size: 13px;
-		line-height: 20px;
-    color: #ddd;
-	}
-	#blitzText + #blitz + .debug {
-		right: calc(30% + 20px);
-	}
-	</style>
 </head>
 
 <body>
@@ -102,12 +46,39 @@ function writeHtml(req, body) {
 </html>`
 }
 
-
-function parseRequest(req, res) {
+function parseRequest(req, res, mime) {
 	const requestUrl = url.parse(req.url);
 	res.writeHead(status.ok, {
-		'Access-Control-Allow-Origin': '*',
-		'Content-Type': 'text/html'
+		'Accept-Ranges': 'bytes',
+		'Transfer-Encoding': 'chunked',
+		'Vary': 'Accept-Encoding',
+		'Content-Type': mime
+	});
+	const fileStream = fs.createReadStream(`${baseDirectory}${requestUrl.pathname}`);
+	((fStream, resp) => {
+		let body = '';
+		if (mime === 'image/png') {
+			fStream.setEncoding('binary');
+		}
+		fStream.on('data', (data) => {
+			body = body + data;
+		});
+		fStream.on('end', () => {
+			if (mime === 'image/png') {
+				resp.end(body, 'binary');
+			}
+			resp.end(body);
+		});
+		fStream.on('error', (err) => {
+			resp.status(404).end();
+		});
+	})(fileStream, res);
+}
+
+function parseRequestBB(req, res) {
+	const requestUrl = url.parse(req.url);
+	res.writeHead(status.ok, {
+		'Content-Type': 'application/javascript'
 	});
 	const fileStream = fs.createReadStream(`${baseDirectory}${requestUrl.pathname.replace(/\.js$/, '')}`);
 	(function _foo(fStream, resp) {
@@ -149,22 +120,32 @@ const server = app
 		const requestUrl = url.parse(req.url);
 		res.end(writeHtml(req, `<canvas id="blitz" width="400" height="300"></canvas>
 	<pre class="debug"><code></code></pre>
+	<img src="images/mouse.png" id="blitzPointer" width="24" height="24">
+	<script src="blitz3d.js"></script>
 	<script src="${requestUrl.pathname}.js"></script>`));
 	})
 	.get('/blitz3d.js', (req, res) => {
 		res.end(blitz.parseBlitz());
 	})
 	.get('*.js', (req, res) => {
-		parseRequest(req, res);
+		parseRequestBB(req, res);
 		res.setTimeout(timeoutTimer, () => {
 			res.status(status.notFound).end();
 		});
+	})
+	.get('*.css', (req, res) => {
+		parseRequest(req, res, 'text/css');
+	})
+	.get('*.png', (req, res) => {
+		parseRequest(req, res, 'image/png');
 	})
 	.get('/', (req, res) => {
 		res.end(writeHtml(req, `<textarea id="blitzText">; Your custom code</textarea>
 <canvas id="blitz" width="400" height="300"></canvas>
 <pre class="debug"><code></code></pre>
+<script src="blitz3d.js"></script>
 <div id="blitzScript"></div>
+<img src="images/mouse.png" id="blitzPointer" width="24" height="24">
 <script>
 var _eventText = document.querySelector('#blitzText');
 var _blitzCode = localStorage.getItem('blitz3d-source');

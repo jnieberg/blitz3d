@@ -1,19 +1,23 @@
+var _waitMouseInterval = undefined;
+var _waitMouseEvent = undefined;
+function _waitMouseGetCode(event) {
+	_waitMouseEvent = event;
+}
+_addListener('mousedown', _waitMouseGetCode, 'waitmouse');
+
 function _waitmouse() {
-	var _waitMouseEvent = undefined;
-	function getCode(event) {
-		event.preventDefault();
-		_waitMouseEvent = event;
-	}
 	function done() {
 		const mouseIndex = [0, 1, 3, 2];
-		_removeAllListeners(document, 'mousedown');
-		return mouseIndex[_waitMouseEvent.which];
+		const result = mouseIndex[_waitMouseEvent.which || _waitMouseEvent.button + 1 || 0];
+		_waitMouseEvent = undefined;
+		return result;
 	}
-	_addListener(document, 'mousedown', getCode);
 	return new Promise((resolve) => {
-		setInterval(() => {
+		_waitMouseInterval = setInterval(() => {
 			if (_waitMouseEvent) {
+				clearInterval(_waitMouseInterval);
 				resolve(done());
+				//_removeListener('mousedown', 'waitmouse');
 			}
 		});
 	});

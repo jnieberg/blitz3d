@@ -26,29 +26,40 @@ function _roundFloat(float) {
 }
 
 var _eventHandlers = {};
-function _addListener(node, event, handler, capture) {
+function _addListener(event, handler, id = 'anonymous') {
+	const node = document;//document.querySelector('#blitz');
 	if (!(node in _eventHandlers)) {
 		// _eventHandlers stores references to nodes
 		_eventHandlers[node] = {};
 	}
 	if (!(event in _eventHandlers[node])) {
 		// each entry contains another entry for each event type
-		_eventHandlers[node][event] = [];
+		_eventHandlers[node][event] = {};
 	}
-	// capture reference
-	_eventHandlers[node][event].push([handler, capture]);
-	node.addEventListener(event, handler, capture);
+	if (!(id in _eventHandlers[node][event])) {
+		// each entry contains another entry for each event type
+		_eventHandlers[node][event][id] = handler;
+		node.addEventListener(event, handler, false);
+	}
 }
-function _removeAllListeners(node, event) {
+function _removeListener(event, id) {
+	const node = document;//document.querySelector('#blitz');
 	if (node in _eventHandlers) {
 		var handlers = _eventHandlers[node];
 		if (event in handlers) {
 			var eventHandlers = handlers[event];
-			for (var i = eventHandlers.length; i--;) {
-				var handler = eventHandlers[i];
-				node.removeEventListener(event, handler[0], handler[1]);
+			if (id in eventHandlers) {
+				var idHandler = eventHandlers[id];
+				//for (var i = idHandlers.length; i--;) {
+				node.removeEventListener(event, idHandler, false);
+				//}
 			}
 		}
+	}
+}
+function _lockPointer() {
+	if (document.pointerLockElement !== _eventCanvas) {
+		_eventCanvas.requestPointerLock();
 	}
 }
 

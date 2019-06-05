@@ -1,22 +1,19 @@
-; FontWidth()/FontHeight example
+; Bank Commands Example
+; ---------------------
 
-; enable graphics mode
-Graphics 800,600,16
+bnkTest=CreateBank(12)
 
-; Set global on font variable
-Global fntArial
+Print bnkTest
+PokeByte bnkTest,0,Rand(255)
+PokeShort bnkTest,1,Rand(65535)
+PokeInt bnkTest,3,Rand(-2147483648,2147483647)
+PokeFloat bnkTest,7,0.5
 
-;Load fonts to a file handle variables
-fntArial=LoadFont("Arial",13,False,False,False)
 
-; set the font and print sizes
-SetFont fntArial
-Text 400,0,"The font width of the widest character is:"+ FontWidth(),True,False
-Text 400,30,"The height of the font is:"+ FontHeight(),True,False
 
-; Standard 'wait for ESC' from user
-While Not KeyHit(1)
-Wend
+Print PeekByte(bnkTest,0)
+Print PeekShort(bnkTest,1)
+Print PeekInt(bnkTest,3)
+Print PeekFloat(bnkTest,7)
 
-; Clear all the fonts from memory!
-FreeFont fntArial
+FreeBank bnkTest 

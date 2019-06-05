@@ -1,19 +1,16 @@
 var _keyHitTimes = [];
+function _keyHitGetCode(event) {
+	const result = _scancode.indexOf(event.code) === -1 ? 0 : _scancode.indexOf(event.code);
+	_keyHitTimes[result] = (_keyHitTimes[result] || 0) + 1;
+}
+_addListener('keydown', _keyHitGetCode, 'keyhit');
+
 function _keyhit(code) {
-	var _keyHitEvent = undefined;
-	function getCode(event) {
-		_keyHitEvent = event;
-		const result = _scancode.indexOf(_keyHitEvent.code) === -1 ? 0 : _scancode.indexOf(_keyHitEvent.code);
-		_keyHitTimes[result] = (_keyHitTimes[result] || 0) + 1;
-	}
-	_addListener(document, 'keydown', getCode);
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
-			if (_keyHitEvent) {
-				_removeAllListeners(document, 'keydown');
+			if (_keyHitTimes[code] > 0) {
 				resolve(_keyHitTimes[code] || 0);
-				_keyHitTimes = [];
-				_keyHitEvent = undefined;
+				_keyHitTimes[code] = 0;
 			} else {
 				resolve(0);
 			}

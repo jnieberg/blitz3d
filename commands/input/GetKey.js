@@ -1,15 +1,13 @@
+var _getKeyEvent = undefined;
 function _getkey() {
-	var _getKeyEvent = undefined;
 	function getCode(event) {
 		_getKeyEvent = event;
 	}
-	_removeAllListeners(document, 'keydown');
-	_addListener(document, 'keydown', getCode);
+	_addListener('keypress', getCode, 'getkey');
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
 			if (_getKeyEvent && _getKeyEvent.location === 0) {
-				_removeAllListeners(document, 'keydown');
-				resolve(_getKeyEvent.key.length === 1 ? _asc(_getKeyEvent.key) : _getKeyEvent.keyCode || 0);
+				resolve(_getKeyEvent.which || _getKeyEvent.keyCode || 0);
 				_getKeyEvent = undefined;
 			} else {
 				resolve(0);

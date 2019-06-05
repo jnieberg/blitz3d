@@ -1,6 +1,7 @@
 var _graphicsCanvas;
 var _graphicsContext;
-function _graphics(width, height, colours, mode) {
+var _graphicsDepth;
+function _graphics(width, height, depth, mode) {
 	const font = _loadfont('courier new', 13, false, false, false);
 	for (let b = 0; b < 2; b++) {
 		if (b === 0) {
@@ -25,5 +26,11 @@ function _graphics(width, height, colours, mode) {
 		_setBufferCanvas[b] = _graphicsCanvas;
 		_setBufferContext[b] = _graphicsContext;
 	}
-	_setbuffer(_frontbuffer());
+
+	const front = _frontbuffer();
+	_graphicsDepth = depth;
+	_eventCanvas = front.canvas;
+	_setbuffer(front);
+	_moveMouseX = width / 2;
+	_moveMouseY = height / 2;
 }

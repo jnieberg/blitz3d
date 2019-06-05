@@ -3,7 +3,7 @@
 /* eslint-env browser, node */
 var fs = require('fs');
 var path = require('path');
-var commandsAsync = ['waitkey', 'keyhit', 'keydown', 'delay', 'input', 'waitmouse', 'getkey'].map((res) => `_${res}`);
+var commandsAsync = ['delay', 'input', 'waitkey', 'getkey', 'keyhit', 'keydown', 'waitmouse', 'getmouse', 'mousehit', 'mousedown'].map((res) => `_${res}`);
 var commandsStatic = ['class', 'in', 'of', 'var', 'case', 'select'];
 var variableReserved = ['abstract', 'instanceof', 'super', 'boolean', 'enum', 'int', 'switch', 'break', 'export', 'interface', 'synchronized', 'byte', 'extends', 'let', 'this', 'case', 'long', 'throw', 'catch', 'final', 'native', 'throws', 'char', 'finally', 'new', 'transient', 'class', 'float', 'null', 'const', 'package', 'try', 'continue', 'function', 'private', 'typeof', 'debugger', 'goto', 'protected', 'var', 'default', 'public', 'void', 'delete', 'implements', 'volatile', 'import', 'short', 'double', 'in', 'static', 'with', 'alert', 'frames', 'outerHeight', 'all', 'frameRate', 'outerWidth', 'anchor', 'function', 'packages', 'anchors', 'getClass', 'pageXOffset', 'area', 'hasOwnProperty', 'pageYOffset', 'Array', 'hidden', 'parent', 'assign', 'history', 'parseFloat', 'blur', 'image', 'parseInt', 'button', 'images', 'password', 'checkbox', 'Infinity', 'pkcs11', 'clearInterval', 'isFinite', 'plugin', 'clearTimeout', 'isNaN', 'prompt', 'clientInformation', 'isPrototypeOf', 'propertyIsEnum', 'close', 'java', 'prototype', 'closed', 'JavaArray', 'radio', 'confirm', 'JavaClass', 'reset', 'constructor', 'JavaObject', 'screenX', 'crypto', 'JavaPackage', 'screenY', 'Date', 'innerHeight', 'scroll', 'decodeURI', 'innerWidth', 'secure', 'decodeURIComponent', 'layer', 'select', 'defaultStatus', 'layers', 'self', 'document', 'length', 'setInterval', 'element', 'link', 'setTimeout', 'elements', 'location', 'status', 'embed', 'Math', 'String', 'embeds', 'mimeTypes', 'submit', 'encodeURI', 'name', 'taint', 'encodeURIComponent', 'NaN', 'text', 'escape', 'navigate', 'textarea', 'eval', 'navigator', 'top', 'event', 'Number', 'toString', 'fileUpload', 'Object', 'undefined', 'focus', 'offscreenBuffering', 'unescape', 'form', 'open', 'untaint', 'forms', 'opener', 'valueOf', 'frame', 'option', 'window', 'onbeforeunload', 'ondragdrop', 'onkeyup', 'onmouseover', 'onblur', 'onerror', 'onload', 'onmouseup', 'ondragdrop', 'onfocus', 'onmousedown', 'onreset', 'onclick', 'onkeydown', 'onmousemove', 'onsubmit', 'oncontextmenu', 'onkeypress', 'onmouseout', 'onunload'];
 var commands = [];
@@ -111,9 +111,12 @@ function parsePart(part) {
 	result = result.toLowerCase();
 	result = result.replace(/:/gm, '\n');
 	result = result.replace(/(^[\t ]+|[\t ]+$)/gm, '');
-	result = result.replace(/^(?!x2x)(.+)$/gm, '$1;');
-	result = result.replace(/x2x *;/gm, ';x2x');
+	result = result.replace(/^(?!xx2xx)(.+)$/gm, '$1;');
+	result = result.replace(/xx2xx *;/gm, ';xx2xx');
 	result = result.replace(/(\b[a-zA-Z0-9_]+?)\$/gm, '$1');
+
+	result = result.replace(/^if *(.*?) *then +(.*?) +else +(.*?);/gim, 'if $1 then;\n$2;\nelse;\n$3;\nend if;');
+	result = result.replace(/^if *(.*?) *then +(.*?);/gim, 'if $1 then;\n$2;\nend If;');
 
 	result = parseCommands(result);
 	result = result.replace(/(\b[a-z][a-zA-Z0-9_$#]*\b)/gim, (result, a1) => {
@@ -122,9 +125,6 @@ function parsePart(part) {
 		}
 		return a1;
 	});
-
-	result = result.replace(/^if *(.*?) *then +(.*?) +else +(.*?);/gim, 'if $1 then;\n$2;\nelse;\n$3;\nend if;');
-	result = result.replace(/^if *(.*?) *then +(.*?);/gim, 'if $1 then;\n$2;\nend If;');
 	result = result.replace(/^if *(.*?) *(?:then)?;/gim, 'if($1) {');
 	result = result.replace(/^else *if *(.*?) *(?:then)?;/gim, '} else if($1) {');
 	result = result.replace(/^else.*?;?/gim, '} else {');
@@ -175,7 +175,7 @@ function parsePart(part) {
 	};
 	for (const c in commandsMap) {
 		if (c && commandsMap[c]) {
-			const commandRx = new RegExp(' *\\b' + c + '\\b *\\(?([^\\(\\)\\n\\;]*)\\)?;?', 'gim');
+			const commandRx = new RegExp(' *\\b' + c + '\\b *\\(?([^\\n\\;]*)\\)?;?', 'gim'); //^\\(\\)
 			result = result.replace(commandRx, commandsMap[c]);
 		}
 	}
@@ -197,11 +197,12 @@ function parsePart(part) {
 	}
 	result = result.replace(/(_[a-zA-Z0-9_$#]+?)\b\((.*?)\.value\b(.*?)\)/gm, '$1(new Float($2.value$3))');
 
-	const varList = [];
+	let varList = [];
 	result = result.replace(/^(\b[a-zA-Z0-9_]+?) *= */gm, (result, a1) => {
 		varList.push(`var ${a1};`);
 		return result;
 	});
+	varList = varList.filter((item, pos) => varList.indexOf(item) === pos);
 	result = varList.join('\n') + '\n' + result;
 
 	result = result.replace(/^function *(.*?);/gim, 'async function $1 {');
