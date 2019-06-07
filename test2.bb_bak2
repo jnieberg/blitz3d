@@ -1,19 +1,26 @@
-; Bank Commands Example
-; ---------------------
+; OpenTCPStream/CloseTCPStream Example
 
-bnkTest=CreateBank(12)
+Print "Connecting..."
+tcp=OpenTCPStream( "www.nu.nl",80 )
 
-Print bnkTest
-PokeByte bnkTest,0,Rand(255)
-PokeShort bnkTest,1,Rand(65535)
-PokeInt bnkTest,3,Rand(-2147483648,2147483647)
-PokeFloat bnkTest,7,0.5
+If Not tcp Print "Failed.":WaitKey:End
 
+Print "Connected! Sending request..."
 
+WriteLine tcp,"GET http://www.nu.nl HTTP/1.0"
+WriteLine tcp,Chr$(10)
 
-Print PeekByte(bnkTest,0)
-Print PeekShort(bnkTest,1)
-Print PeekInt(bnkTest,3)
-Print PeekFloat(bnkTest,7)
+If Eof(tcp) Print "Failed.":WaitKey:End
 
-FreeBank bnkTest 
+Print "Request sent! Waiting for reply..."
+
+While Not Eof(tcp)
+Print ReadLine$( tcp )
+Wend
+
+If Eof(tcp)=1 Then Print "Success!" Else Print "Error!"
+
+CloseTCPStream tcp
+
+WaitKey
+End

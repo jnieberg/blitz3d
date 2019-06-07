@@ -2,10 +2,13 @@
 /* eslint-env browser, node */
 const url = require('url');
 const fs = require('fs');
+const net = require('net');
 const express = require('express');
+const mkdirp = require('mkdirp');
 const bodyParser = require('body-parser');
 const blitz = require('./blitz');
 const baseDirectory = __dirname;
+const workingDirectory = baseDirectory.replace(/\\/g, '/');
 const portDefault = 3000;
 const port = process.env.PORT || portDefault;
 const timeoutTimer = 10000;
@@ -90,6 +93,7 @@ function parseRequestBB(req, res) {
 			const result = blitz.parseBB(body);
 			resp.end(`(async function Main() {
 _graphics(400, 300, 32, 1);
+_changedir('${workingDirectory}');
 ${result}
 ${blitz.endProgram()}
 })();`);
@@ -98,6 +102,17 @@ ${blitz.endProgram()}
 			resp.end();
 		});
 	}(fileStream, res));
+}
+
+function getPost(req, callback) {
+	streamRaw = '';
+	req.on('data', chunk => {
+		streamRaw += chunk.toString();
+	});
+	req.on('end', () => {
+		const stream = JSON.parse(streamRaw);
+		callback(stream);
+	});
 }
 
 const server = app
@@ -113,7 +128,143 @@ const server = app
 			res.end(result);
 		});
 		req.on('error', (err) => {
+			res.status(status.notFound).end();
+		});
+	})
+	.get('/readdir/*', (req, res) => {
+		const requestUrl = url.parse(req.url);
+		const folder = decodeURI(requestUrl.pathname.split(/^[\/\\].*?[\/\\]/)[1] + '/');
+		fs.readdir(folder, (err, files) => {
+			const result = [];
+			files.forEach(file => {
+				let type = 1;
+				try {
+					if (fs.statSync(folder + file).isDirectory()) {
+						type = 2;
+					}
+					result.push({
+						name: file,
+						type: type
+					});
+				} catch (err) { }
+			});
+			res.end(JSON.stringify(result));
+		});
+	})
+	.get('/filetype/*', (req, res) => {
+		const requestUrl = url.parse(req.url);
+		const file = decodeURI(requestUrl.pathname.split(/^[\/\\].*?[\/\\]/)[1]);
+		try {
+			if (fs.statSync(file).isDirectory()) {
+				res.end('2');
+			} else {
+				res.end('1');
+			}
+		} catch (err) {
+			res.status(status.notFound).end('0');
+		}
+	})
+	.get('/openfile/*', (req, res) => {
+		const requestUrl = url.parse(req.url);
+		const file = decodeURI(requestUrl.pathname.split(/^[\/\\].*?[\/\\]/)[1]);
+		try {
+			fs.readFile(file, 'utf8', (err, data) => {
+				res.end(data);
+			});
+		} catch (err) {
+			res.status(status.notFound).end('');
+		}
+	})
+	.post('/writefile', (req, res) => {
+		getPost(req, (stream) => {
+			try {
+				fs.writeFile(stream.name, stream.data, 'utf8', (err, data) => {
+					if (err) throw err;
+					res.end(JSON.stringify({
+						name: stream.name,
+						data: stream.data,
+						position: 0,
+						readonly: false
+					}));
+				});
+			} catch (err) {
+				res.status(status.notFound).end();
+			}
+		});
+	})
+	.get('/currentdir', (req, res) => {
+		res.end(baseDirectory);
+	})
+	.post('/changedir', (req, res) => {
+		getPost(req, stream => {
+			process.chdir(stream.directory);
 			res.end();
+		});
+	})
+	.post('/createdir', (req, res) => {
+		getPost(req, stream => {
+			mkdirp(stream.path, err => {
+				if (err) {
+					res.status(status.notFound).end();
+				} else {
+					res.end();
+				}
+			});
+		});
+	})
+	.post('/deletedir', (req, res) => {
+		getPost(req, (stream) => {
+			fs.rmdir(stream.path, err => {
+				if (err) {
+					res.status(status.notFound).end();
+				} else {
+					res.end();
+				}
+			});
+		});
+	})
+	.get('/filesize/*', (req, res) => {
+		const requestUrl = url.parse(req.url);
+		const file = decodeURI(requestUrl.pathname.split(/^[\/\\].*?[\/\\]/)[1]);
+		res.end(String(fs.statSync(file).size || 0));
+	})
+	.post('/copyfile', (req, res) => {
+		getPost(req, (stream) => {
+			fs.copyFile(stream.from, stream.to, err => {
+				if (err) {
+					res.status(status.notFound).end();
+				} else {
+					res.end();
+				}
+			});
+		});
+	})
+	.post('/deletefile', (req, res) => {
+		getPost(req, (stream) => {
+			fs.unlink(stream.filename, err => {
+				if (err) {
+					res.status(status.notFound).end();
+				} else {
+					res.end();
+				}
+			});
+		});
+	})
+	.get('/writeline/*', (req, res) => {
+		const requestUrl = url.parse(req.url);
+		const stream = JSON.parse(decodeURI(requestUrl.pathname.split(/^[\/\\].*?[\/\\]/)[1]));
+		const uriSplit = stream.name.split(':'); // location:port
+		var client = new net.Socket();
+		client.connect(uriSplit[1], uriSplit[0], () => {
+			console.log('Connected');
+			client.write(stream.string);
+		});
+		client.on('data', function (data) {
+			console.log('Received: ' + data);
+			client.destroy(); // kill client after server's response
+		});
+		client.on('close', function () {
+			console.log('Connection closed');
 		});
 	})
 	.get('*.bb', (req, res) => {
@@ -166,6 +317,7 @@ function _eventTextExecute(callback = () => {}) {
 			var script = document.createElement('script');
 			script.innerHTML += '(async function Main() {\\n';
 			script.innerHTML += '_graphics(400, 300, 32, 1);\\n';
+			script.innerHTML += '_changedir('${workingDirectory}');\\n';
 			script.innerHTML += xhr.response + '\\n';
 			script.innerHTML += 'setTimeout(() => {\\n';
 			script.innerHTML += '${blitz.endProgram().replace(/'/g, '\\\'')}\\n';

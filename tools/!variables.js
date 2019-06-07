@@ -200,3 +200,5 @@ _charcode[81] = '3';
 _charcode[82] = '0';
 _charcode[83] = '.';
 _charcode[181] = '/';
+
+const _INTEGER_MAX = 2147483648;

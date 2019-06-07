@@ -63,6 +63,64 @@ function _lockPointer() {
 	}
 }
 
+function _int2string(integer) {
+	return _hex(integer).match(/.{1,2}/g).map(result => String.fromCharCode(parseInt(result, 16))).join('');
+}
+function _string2int(string) {
+	return parseInt((string.match(/[\w\W]/g) || []).map((result, index) => _hex(result.charCodeAt(0) || 0, 2)).join(''), 16);
+}
+function _loopforever() {
+	return new Promise((resolve, reject) => {
+		setTimeout(() => {
+			resolve(true);
+		});
+	});
+}
+
+function _getCommand(command, arguments) {
+	return new Promise((resolve, reject) => {
+		var http = new XMLHttpRequest();
+		var query = arguments;
+		if (typeof arguments === 'object') {
+			query = JSON.stringify(query);
+		}
+		http.open('GET', `${command}/${query}`, true);
+		http.onreadystatechange = () => {
+			if (http.readyState === 4) {
+				let data = http.responseText;
+				try {
+					data = JSON.parse(data);
+				} catch (err) { }
+				resolve(data);
+			}
+		}
+		http.onerror = () => {
+			resolve();
+		}
+		http.send();
+	});
+}
+
+function _postCommand(command, arguments) {
+	return new Promise((resolve, reject) => {
+		var http = new XMLHttpRequest();
+		http.open('POST', command, true);
+		http.onreadystatechange = () => {
+			if (http.readyState === 4) {
+				let data = http.responseText;
+				try {
+					data = JSON.parse(data);
+				} catch (err) { }
+				resolve(data);
+			}
+		}
+		http.onerror = () => {
+			resolve();
+		}
+		http.send(JSON.stringify(arguments));
+	});
+}
+
 class Float {
 	constructor(float) {
 		const result = float && float.value ? float.value : float || 0.0;

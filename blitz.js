@@ -3,17 +3,19 @@
 /* eslint-env browser, node */
 var fs = require('fs');
 var path = require('path');
-var commandsAsync = ['delay', 'input', 'waitkey', 'getkey', 'keyhit', 'keydown', 'waitmouse', 'getmouse', 'mousehit', 'mousedown'].map((res) => `_${res}`);
+var commandsAsync = ['delay', 'input', 'waitkey', 'getkey', 'keyhit', 'keydown', 'waitmouse', 'getmouse', 'mousehit', 'mousedown', 'loopforever', 'readdir', 'filetype', 'writefile', 'openfile', 'readfile', 'closefile', 'currentdir', 'changedir', 'createdir', 'deletedir', 'filesize', 'copyfile', 'deletefile', 'writeline'].map((res) => `_${res}`);
 var commandsStatic = ['class', 'in', 'of', 'var', 'case', 'select'];
-var variableReserved = ['abstract', 'instanceof', 'super', 'boolean', 'enum', 'int', 'switch', 'break', 'export', 'interface', 'synchronized', 'byte', 'extends', 'let', 'this', 'case', 'long', 'throw', 'catch', 'final', 'native', 'throws', 'char', 'finally', 'new', 'transient', 'class', 'float', 'null', 'const', 'package', 'try', 'continue', 'function', 'private', 'typeof', 'debugger', 'goto', 'protected', 'var', 'default', 'public', 'void', 'delete', 'implements', 'volatile', 'import', 'short', 'double', 'in', 'static', 'with', 'alert', 'frames', 'outerHeight', 'all', 'frameRate', 'outerWidth', 'anchor', 'function', 'packages', 'anchors', 'getClass', 'pageXOffset', 'area', 'hasOwnProperty', 'pageYOffset', 'Array', 'hidden', 'parent', 'assign', 'history', 'parseFloat', 'blur', 'image', 'parseInt', 'button', 'images', 'password', 'checkbox', 'Infinity', 'pkcs11', 'clearInterval', 'isFinite', 'plugin', 'clearTimeout', 'isNaN', 'prompt', 'clientInformation', 'isPrototypeOf', 'propertyIsEnum', 'close', 'java', 'prototype', 'closed', 'JavaArray', 'radio', 'confirm', 'JavaClass', 'reset', 'constructor', 'JavaObject', 'screenX', 'crypto', 'JavaPackage', 'screenY', 'Date', 'innerHeight', 'scroll', 'decodeURI', 'innerWidth', 'secure', 'decodeURIComponent', 'layer', 'select', 'defaultStatus', 'layers', 'self', 'document', 'length', 'setInterval', 'element', 'link', 'setTimeout', 'elements', 'location', 'status', 'embed', 'Math', 'String', 'embeds', 'mimeTypes', 'submit', 'encodeURI', 'name', 'taint', 'encodeURIComponent', 'NaN', 'text', 'escape', 'navigate', 'textarea', 'eval', 'navigator', 'top', 'event', 'Number', 'toString', 'fileUpload', 'Object', 'undefined', 'focus', 'offscreenBuffering', 'unescape', 'form', 'open', 'untaint', 'forms', 'opener', 'valueOf', 'frame', 'option', 'window', 'onbeforeunload', 'ondragdrop', 'onkeyup', 'onmouseover', 'onblur', 'onerror', 'onload', 'onmouseup', 'ondragdrop', 'onfocus', 'onmousedown', 'onreset', 'onclick', 'onkeydown', 'onmousemove', 'onsubmit', 'oncontextmenu', 'onkeypress', 'onmouseout', 'onunload'];
+var commandsReturn = ['resizebank', 'closedir'];
+var variableReserved = ['abstract', 'instanceof', 'super', 'boolean', 'enum', 'int', 'switch', 'break', 'export', 'interface', 'synchronized', 'byte', 'extends', 'let', 'this', 'case', 'long', 'throw', 'catch', 'final', 'native', 'throws', 'char', 'finally', 'new', 'transient', 'class', 'float', 'null', 'const', 'package', 'try', 'continue', 'private', 'typeof', 'debugger', 'goto', 'protected', 'var', 'default', 'public', 'void', 'delete', 'implements', 'volatile', 'import', 'short', 'double', 'in', 'static', 'with', 'alert', 'frames', 'outerHeight', 'all', 'frameRate', 'outerWidth', 'anchor', 'packages', 'anchors', 'getClass', 'pageXOffset', 'area', 'hasOwnProperty', 'pageYOffset', 'Array', 'hidden', 'parent', 'assign', 'history', 'parseFloat', 'blur', 'image', 'parseInt', 'button', 'images', 'password', 'checkbox', 'Infinity', 'pkcs11', 'clearInterval', 'isFinite', 'plugin', 'clearTimeout', 'isNaN', 'prompt', 'clientInformation', 'isPrototypeOf', 'propertyIsEnum', 'close', 'java', 'prototype', 'closed', 'JavaArray', 'radio', 'confirm', 'JavaClass', 'reset', 'constructor', 'JavaObject', 'screenX', 'crypto', 'JavaPackage', 'screenY', 'Date', 'innerHeight', 'scroll', 'decodeURI', 'innerWidth', 'secure', 'decodeURIComponent', 'layer', 'select', 'defaultStatus', 'layers', 'self', 'document', 'length', 'setInterval', 'element', 'link', 'setTimeout', 'elements', 'location', 'status', 'embed', 'Math', 'String', 'embeds', 'mimeTypes', 'submit', 'encodeURI', 'name', 'taint', 'encodeURIComponent', 'NaN', 'text', 'escape', 'navigate', 'textarea', 'eval', 'navigator', 'top', 'event', 'Number', 'toString', 'fileUpload', 'Object', 'undefined', 'focus', 'offscreenBuffering', 'unescape', 'form', 'open', 'untaint', 'forms', 'opener', 'valueOf', 'frame', 'option', 'window', 'onbeforeunload', 'ondragdrop', 'onkeyup', 'onmouseover', 'onblur', 'onerror', 'onload', 'onmouseup', 'ondragdrop', 'onfocus', 'onmousedown', 'onreset', 'onclick', 'onkeydown', 'onmousemove', 'onsubmit', 'oncontextmenu', 'onkeypress', 'onmouseout', 'onunload'];
 var commands = [];
 var commandsFiles = [];
+const baseDirectory = __dirname;
 
 function traverseDir(dir, files) {
 	files = [];
-	fs.readdirSync(dir).forEach(file => {
+	fs.readdirSync(baseDirectory + '/' + dir).forEach(file => {
 		let fullPath = path.join(dir, file);
-		if (fs.lstatSync(fullPath).isDirectory()) {
+		if (fs.lstatSync(baseDirectory + '/' + fullPath).isDirectory()) {
 			files.push(...traverseDir(fullPath));
 		} else {
 			files.push(fullPath);
@@ -30,13 +32,13 @@ function readCommands() {
 function printCommands() {
 	commands = readCommands();
 	return commandsFiles.map((filename) => {
-		return fs.readFileSync(filename)
+		return fs.readFileSync(baseDirectory + '/' + filename)
 	}).join('\n');
 }
 
 function printTools() {
-	const tools = fs.readdirSync('tools/');
-	return tools.map((filename) => fs.readFileSync('tools/' + filename)).join('\n');
+	const tools = fs.readdirSync(baseDirectory + '/tools/');
+	return tools.map((filename) => fs.readFileSync(baseDirectory + '/tools/' + filename)).join('\n');
 }
 
 function initialize() {
@@ -98,6 +100,12 @@ function parseCommands(result) {
 		result = result.replace(/\(\((.*?)\)\)/gim, '($1)');
 		brackWhile += 1;
 	}
+	result = result.replace(/\b_([a-z0-9_$]*?\b) *\( *(\b[^,\r\n]*\b) *(,? *?)(.*) *\);/gim, (res, a1, a2, a3, a4) => {
+		if (commandsReturn.indexOf(a1) > -1) {
+			return `${a2} = _${a1}(${a2}${a3}${a4});`;
+		}
+		return res;
+	});
 	return result;
 }
 
@@ -105,21 +113,25 @@ function parsePart(part) {
 	let result = part;
 	let quotes = null;
 	let comments = null;
+	result = result.toLowerCase();
+
+	result = result.replace(/^if *(.*?) *then +(.*?) +else +(.*?)/gim, 'if $1 then\n$2\nelse\n$3\nend if\n');
+	result = result.replace(/^if *(.*?) *then +(.*?)/gim, 'if $1 then\n$2\nend if\n');
+	result = result.replace(/^if +(.*?) +(.*?)/gim, 'if $1 then\n$2\nend if\n');
+	console.log(result);
+
+	result = result.replace(/:/gm, '\n');
 	result = result.replace(/;(.*?)/gm, '//$1');
 	[result, quotes] = backupText(result, 1, /".*?"/gm);
 	[result, comments] = backupText(result, 2, / *\/\/(.*?)$/gm);
-	result = result.toLowerCase();
-	result = result.replace(/:/gm, '\n');
 	result = result.replace(/(^[\t ]+|[\t ]+$)/gm, '');
 	result = result.replace(/^(?!xx2xx)(.+)$/gm, '$1;');
 	result = result.replace(/xx2xx *;/gm, ';xx2xx');
-	result = result.replace(/(\b[a-zA-Z0-9_]+?)\$/gm, '$1');
-
-	result = result.replace(/^if *(.*?) *then +(.*?) +else +(.*?);/gim, 'if $1 then;\n$2;\nelse;\n$3;\nend if;');
-	result = result.replace(/^if *(.*?) *then +(.*?);/gim, 'if $1 then;\n$2;\nend If;');
+	result = result.replace(/(\b[a-zA-Z0-9_]+?)[\$%]/gm, '$1');
 
 	result = parseCommands(result);
-	result = result.replace(/(\b[a-z][a-zA-Z0-9_$#]*\b)/gim, (result, a1) => {
+
+	result = result.replace(/(\b[a-z][a-zA-Z0-9_$#]*?\b)/gim, (result, a1) => {
 		if (variableReserved.indexOf(a1) > -1) {
 			return `${a1}_1`;
 		}
@@ -162,6 +174,7 @@ function parsePart(part) {
 		select: 'switch($1) {',
 		case: 'break;\ncase $1:',
 		repeat: 'do {',
+		forever: '} while(_loopforever());',
 		default: 'break;\ndefault:',
 		global: 'var $1;',
 		local: 'let $1;',
@@ -169,7 +182,7 @@ function parsePart(part) {
 		field: '$1 = null;',
 		until: '} while(!($1));',
 		goto: '',
-		exit: 'break',
+		exit: 'break;',
 		and: '&& $1',
 		or: '|| $1'
 	};
@@ -221,6 +234,7 @@ function parsePart(part) {
 
 	result = restoreText(result, 2, comments);
 	result = restoreText(result, 1, quotes);
+	result = result.replace(/([^\\])\\(?!\\)/gm, '$1\\\\');
 	return result;
 }
 

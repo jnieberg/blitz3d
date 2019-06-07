@@ -3,7 +3,9 @@ function _print(txt = 0 || '', fix) {
 		if (txt instanceof Float) {
 			txt = txt.float;
 		} else if (typeof txt === 'number') {
-			txt = _roundFloat(txt);
+			if (txt.toString().indexOf('.') > -1) {
+				txt = _roundFloat(txt);
+			}
 		}
 		if (_printY + _setFontCurrent.height > _graphicsCanvas.height) {
 			_saveScreen();
