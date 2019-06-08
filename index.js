@@ -254,18 +254,22 @@ const server = app
 		const requestUrl = url.parse(req.url);
 		const stream = JSON.parse(decodeURI(requestUrl.pathname.split(/^[\/\\].*?[\/\\]/)[1]));
 		const uriSplit = stream.name.split(':'); // location:port
-		var client = new net.Socket();
-		client.connect(uriSplit[1], uriSplit[0], () => {
-			console.log('Connected');
-			client.write(stream.string);
+		var body = '';
+		var sock = net.connect(uriSplit[1], uriSplit[0], () => {
+			sock.write(stream.data.replace(/\/n\b/, '\r\n'));
 		});
-		client.on('data', function (data) {
-			console.log('Received: ' + data);
-			client.destroy(); // kill client after server's response
+		sock.on('data', (data) => {
+			body += data;
 		});
-		client.on('close', function () {
-			console.log('Connection closed');
+		sock.on('end', () => {
+			res.end(JSON.stringify({
+				name: stream.name,
+				data: body.toString(),
+				position: 0,
+				readonly: false
+			}));
 		});
+		sock.on('error', (err) => { })
 	})
 	.get('*.bb', (req, res) => {
 		const requestUrl = url.parse(req.url);

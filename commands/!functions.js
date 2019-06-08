@@ -63,8 +63,8 @@ function _lockPointer() {
 	}
 }
 
-function _int2string(integer) {
-	return _hex(integer).match(/.{1,2}/g).map(result => String.fromCharCode(parseInt(result, 16))).join('');
+function _int2string(integer, length = 8) {
+	return _hex(integer, length).match(/.{1,2}/g).map(result => String.fromCharCode(parseInt(result, 16))).join('');
 }
 function _string2int(string) {
 	return parseInt((string.match(/[\w\W]/g) || []).map((result, index) => _hex(result.charCodeAt(0) || 0, 2)).join(''), 16);
@@ -123,7 +123,7 @@ function _postCommand(command, arguments) {
 
 class Float {
 	constructor(float) {
-		const result = float && float.value ? float.value : float || 0.0;
+		const result = typeof float !== 'undefined' && typeof float.value !== 'undefined' ? float.value : float || 0.0;
 		this.float = result.toPrecision(6).replace(/([^\.])0+$/, '$1');
 	}
 
@@ -132,7 +132,7 @@ class Float {
 	}
 
 	set value(float) {
-		const result = float && float.value ? float.value : float || 0.0;
+		const result = typeof float !== 'undefined' && typeof float.value !== 'undefined' ? float.value : float || 0.0;
 		this.float = result.toPrecision(6).replace(/([^\.])0+$/, '$1');
 	}
 }

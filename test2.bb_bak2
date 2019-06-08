@@ -1,14 +1,13 @@
 ; OpenTCPStream/CloseTCPStream Example
 
 Print "Connecting..."
-tcp=OpenTCPStream( "www.nu.nl",80 )
+tcp=OpenTCPStream( "www.google.com",80 )
 
 If Not tcp Print "Failed.":WaitKey:End
 
 Print "Connected! Sending request..."
 
-WriteLine tcp,"GET http://www.nu.nl HTTP/1.0"
-WriteLine tcp,Chr$(10)
+WriteLine tcp,"GET /" + Chr$(10) + Chr$(10)
 
 If Eof(tcp) Print "Failed.":WaitKey:End
 
@@ -20,7 +19,7 @@ Wend
 
 If Eof(tcp)=1 Then Print "Success!" Else Print "Error!"
 
-CloseTCPStream tcp
+; CloseTCPStream tcp
 
 WaitKey
 End

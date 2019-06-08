@@ -1,5 +1,5 @@
 var _setFontCurrent = {
-	family: 'courier new',
+	family: 'courier',
 	size: 13,
 	height: 13,
 	bold: false,

@@ -2,7 +2,7 @@ var _graphicsCanvas;
 var _graphicsContext;
 var _graphicsDepth;
 function _graphics(width, height, depth, mode) {
-	const font = _loadfont('courier new', 13, false, false, false);
+	const font = _loadfont('courier', 13, false, false, false);
 	for (let b = 0; b < 2; b++) {
 		if (b === 0) {
 			_graphicsCanvas = document.querySelector('#blitz');
