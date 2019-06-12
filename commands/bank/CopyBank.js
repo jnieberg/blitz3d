@@ -1,3 +1,4 @@
 function _copybank(bankFrom, offsetFrom, bankTo, offsetTo, size) {
-	new Uint8Array(bankTo, offsetTo).set(new Uint8Array(bankFrom, offsetFrom, size));
+	const string = bankFrom.data.substring(offsetFrom, offsetFrom + size);
+	bankTo.data = bankTo.data.substr(0, offsetTo) + string + bankTo.data.substr(offsetTo + string.length);
 }

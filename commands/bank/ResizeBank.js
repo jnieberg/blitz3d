@@ -1,17 +1,4 @@
-if (!ArrayBuffer.transfer) {
-	ArrayBuffer.transfer = function (source, length) {
-		if (!(source instanceof ArrayBuffer))
-			throw new TypeError('Source must be an instance of ArrayBuffer');
-		if (length <= source.byteLength)
-			return source.slice(0, length);
-		var sourceView = new Uint8Array(source),
-			destView = new Uint8Array(new ArrayBuffer(length));
-		destView.set(sourceView);
-		return destView.buffer;
-	};
-}
-
 function _resizebank(bank, size = 0) {
-	bank = ArrayBuffer.transfer(bank, size);
+	bank.data = bank.data.substring(0, bank.data.length) + Array(bank.data.length + 1).join(_chr(0));
 	return bank;
 }

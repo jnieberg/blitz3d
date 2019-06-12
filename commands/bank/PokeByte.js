@@ -1,4 +1,3 @@
-function _pokebyte(bank, offset, value) {
-	const view = new DataView(bank);
-	view.setUint8(offset, value);
+function _pokebyte(bank, offset, byte) {
+	return _writebyte(bank, byte, offset);
 }

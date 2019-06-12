@@ -203,4 +203,5 @@ _charcode[181] = '/';
 
 const _BYTE_MAX = 256;
 const _SHORT_MAX = 65536;
+const _FLOAT_MAX = 65536.246;
 const _INTEGER_MAX = 2147483648;

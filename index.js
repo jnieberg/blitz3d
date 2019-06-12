@@ -1,13 +1,13 @@
 // @ts-nocheck
 /* eslint-env browser, node */
 const url = require('url');
-const fs = require('fs');
-const net = require('net');
 const express = require('express');
-const mkdirp = require('mkdirp');
 const bodyParser = require('body-parser');
 const blitz = require('./blitz');
-const baseDirectory = __dirname;
+const { postRequest } = require('./requests/postRequest');
+const { getRequest } = require('./requests/getRequest');
+const { parseRequest, parseRequestBB } = require('./requests/parseRequest');
+const baseDirectory = process.cwd();
 const workingDirectory = baseDirectory.replace(/\\/g, '/');
 const portDefault = 3000;
 const port = process.env.PORT || portDefault;
@@ -49,72 +49,6 @@ function writeHtml(req, body) {
 </html>`
 }
 
-function parseRequest(req, res, mime) {
-	const requestUrl = url.parse(req.url);
-	res.writeHead(status.ok, {
-		'Accept-Ranges': 'bytes',
-		'Transfer-Encoding': 'chunked',
-		'Vary': 'Accept-Encoding',
-		'Content-Type': mime
-	});
-	const fileStream = fs.createReadStream(`${baseDirectory}${requestUrl.pathname}`);
-	((fStream, resp) => {
-		let body = '';
-		if (mime === 'image/png') {
-			fStream.setEncoding('binary');
-		}
-		fStream.on('data', (data) => {
-			body = body + data;
-		});
-		fStream.on('end', () => {
-			if (mime === 'image/png') {
-				resp.end(body, 'binary');
-			}
-			resp.end(body);
-		});
-		fStream.on('error', (err) => {
-			resp.status(404).end();
-		});
-	})(fileStream, res);
-}
-
-function parseRequestBB(req, res) {
-	const requestUrl = url.parse(req.url);
-	res.writeHead(status.ok, {
-		'Content-Type': 'application/javascript'
-	});
-	const fileStream = fs.createReadStream(`${baseDirectory}${requestUrl.pathname.replace(/\.js$/, '')}`);
-	(function _foo(fStream, resp) {
-		let body = '';
-		fStream.on('data', (data) => {
-			body = body + data;
-		});
-		fStream.on('end', () => {
-			const result = blitz.parseBB(body);
-			resp.end(`(async function Main() {
-_graphics(400, 300, 32, 1);
-_changedir('${workingDirectory}');
-${result}
-${blitz.endProgram()}
-})();`);
-		});
-		fStream.on('error', (err) => {
-			resp.end();
-		});
-	}(fileStream, res));
-}
-
-function getPost(req, callback) {
-	streamRaw = '';
-	req.on('data', chunk => {
-		streamRaw += chunk.toString();
-	});
-	req.on('end', () => {
-		const stream = JSON.parse(streamRaw);
-		callback(stream);
-	});
-}
-
 const server = app
 	.use(bodyParser.urlencoded({ extended: true }))
 	.use(bodyParser.json())
@@ -131,145 +65,11 @@ const server = app
 			res.status(status.notFound).end();
 		});
 	})
-	.get('/readdir/*', (req, res) => {
-		const requestUrl = url.parse(req.url);
-		const folder = decodeURI(requestUrl.pathname.split(/^[\/\\].*?[\/\\]/)[1] + '/');
-		fs.readdir(folder, (err, files) => {
-			const result = [];
-			files.forEach(file => {
-				let type = 1;
-				try {
-					if (fs.statSync(folder + file).isDirectory()) {
-						type = 2;
-					}
-					result.push({
-						name: file,
-						type: type
-					});
-				} catch (err) { }
-			});
-			res.end(JSON.stringify(result));
-		});
+	.get('/_*', (req, res) => {
+		getRequest(req, (fn, query) => fn(res, query));
 	})
-	.get('/filetype/*', (req, res) => {
-		const requestUrl = url.parse(req.url);
-		const file = decodeURI(requestUrl.pathname.split(/^[\/\\].*?[\/\\]/)[1]);
-		try {
-			if (fs.statSync(file).isDirectory()) {
-				res.end('2');
-			} else {
-				res.end('1');
-			}
-		} catch (err) {
-			res.status(status.notFound).end('0');
-		}
-	})
-	.get('/openfile/*', (req, res) => {
-		const requestUrl = url.parse(req.url);
-		const file = decodeURI(requestUrl.pathname.split(/^[\/\\].*?[\/\\]/)[1]);
-		try {
-			fs.readFile(file, 'utf8', (err, data) => {
-				res.end(data);
-			});
-		} catch (err) {
-			res.status(status.notFound).end('');
-		}
-	})
-	.post('/writefile', (req, res) => {
-		getPost(req, (stream) => {
-			try {
-				fs.writeFile(stream.name, stream.data, 'utf8', (err, data) => {
-					if (err) throw err;
-					res.end(JSON.stringify({
-						name: stream.name,
-						data: stream.data,
-						position: 0,
-						readonly: false
-					}));
-				});
-			} catch (err) {
-				res.status(status.notFound).end();
-			}
-		});
-	})
-	.get('/currentdir', (req, res) => {
-		res.end(baseDirectory);
-	})
-	.post('/changedir', (req, res) => {
-		getPost(req, stream => {
-			process.chdir(stream.directory);
-			res.end();
-		});
-	})
-	.post('/createdir', (req, res) => {
-		getPost(req, stream => {
-			mkdirp(stream.path, err => {
-				if (err) {
-					res.status(status.notFound).end();
-				} else {
-					res.end();
-				}
-			});
-		});
-	})
-	.post('/deletedir', (req, res) => {
-		getPost(req, (stream) => {
-			fs.rmdir(stream.path, err => {
-				if (err) {
-					res.status(status.notFound).end();
-				} else {
-					res.end();
-				}
-			});
-		});
-	})
-	.get('/filesize/*', (req, res) => {
-		const requestUrl = url.parse(req.url);
-		const file = decodeURI(requestUrl.pathname.split(/^[\/\\].*?[\/\\]/)[1]);
-		res.end(String(fs.statSync(file).size || 0));
-	})
-	.post('/copyfile', (req, res) => {
-		getPost(req, (stream) => {
-			fs.copyFile(stream.from, stream.to, err => {
-				if (err) {
-					res.status(status.notFound).end();
-				} else {
-					res.end();
-				}
-			});
-		});
-	})
-	.post('/deletefile', (req, res) => {
-		getPost(req, (stream) => {
-			fs.unlink(stream.filename, err => {
-				if (err) {
-					res.status(status.notFound).end();
-				} else {
-					res.end();
-				}
-			});
-		});
-	})
-	.get('/writeline/*', (req, res) => {
-		const requestUrl = url.parse(req.url);
-		const stream = JSON.parse(decodeURI(requestUrl.pathname.split(/^[\/\\].*?[\/\\]/)[1]));
-		const uriSplit = stream.name.split(':'); // location:port
-		var body = '';
-		var sock = net.connect(uriSplit[1], uriSplit[0], () => {
-			sock.write(stream.data.replace(/\/n\b/, '\r\n'));
-		});
-		sock.on('data', (data) => {
-			body += data;
-		});
-		sock.on('end', () => {
-			res.end(JSON.stringify({
-				name: stream.name,
-				data: body.toString(),
-				position: 0,
-				readonly: false
-			}));
-		});
-		sock.on('error', (err) => { })
+	.post('/_*', (req, res) => {
+		postRequest(req, (fn, query) => fn(res, query));
 	})
 	.get('*.bb', (req, res) => {
 		const requestUrl = url.parse(req.url);
@@ -320,12 +120,14 @@ function _eventTextExecute(callback = () => {}) {
 		if (xhr.readyState === 4) {
 			var script = document.createElement('script');
 			script.innerHTML += '(async function Main() {\\n';
+			script.innerHTML += 'try {\\n';
 			script.innerHTML += '_graphics(400, 300, 32, 1);\\n';
-			script.innerHTML += '_changedir('${workingDirectory}');\\n';
+			script.innerHTML += 'await _changedir('${workingDirectory}');\\n';
 			script.innerHTML += xhr.response + '\\n';
-			script.innerHTML += 'setTimeout(() => {\\n';
+			script.innerHTML += '} catch(err) {\\n';
+			script.innerHTML += 'console.log(err.message);\\n';
+			script.innerHTML += '}\\n';
 			script.innerHTML += '${blitz.endProgram().replace(/'/g, '\\\'')}\\n';
-			script.innerHTML += '}, 100);\\n';
 			script.innerHTML += '})();';
 			scriptContainer.innerHTML = '';
 			scriptContainer.appendChild(script);
@@ -340,6 +142,7 @@ _eventTextExecute();
 </script>`));
 	})
 	.listen(port, () => {
-		return console.log(`${color.fgGreen}[SYSTEM] - Started.Listening to http://localhost:${port}${color.reset}`);
+		return console.log(`${color.fgGreen}[SYSTEM] - Started. Listening to http://localhost:${port}${color.reset}`);
 	});
+
 server.timeout = timeoutTimer;

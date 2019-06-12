@@ -3,6 +3,5 @@ function _readline(stream) {
 	nextBreak = nextBreak > -1 ? nextBreak : stream.data.length;
 	const output = stream.data.substring(stream.position, nextBreak);
 	stream.position += output.length + 1;
-
 	return output;
 }

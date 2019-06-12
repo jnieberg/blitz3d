@@ -1,7 +1,8 @@
 async function _openfile(filename) {
+	const result = await _getCommand('openfile', filename);
 	return {
 		name: filename.trim(),
-		data: await _getCommand('openfile', filename),
+		data: result,
 		position: 0,
 		readonly: false
 	}

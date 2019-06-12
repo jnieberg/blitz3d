@@ -22,7 +22,7 @@ function _currentBuffer() {
 }
 
 function _roundFloat(float) {
-	return parseFloat(float.toPrecision(6)); //Math.round(float * 1000000) / 1000000;
+	return parseFloat(float.toPrecision(8)); //Math.round(float * 1000000) / 1000000;
 }
 
 var _eventHandlers = {};
@@ -63,12 +63,30 @@ function _lockPointer() {
 	}
 }
 
-function _int2string(integer, length = 8) {
-	return _hex(integer, length).match(/.{1,2}/g).map(result => String.fromCharCode(parseInt(result, 16))).join('');
+function _string2bytes(string, length) {
+	return string.split('').slice(-length).map(byte => byte.charCodeAt(0));
+}
+function _bytes2string(bytes, length) {
+	return bytes.map(byte => String.fromCharCode(byte)).slice(-length).join('');
+}
+function _int2string(integer, length = 4) {
+	return _hex(integer, length * 2).match(/.{1,2}/g).map(result => String.fromCharCode(parseInt(result, 16))).join('');
 }
 function _string2int(string) {
 	return parseInt((string.match(/[\w\W]/g) || []).map((result, index) => _hex(result.charCodeAt(0) || 0, 2)).join(''), 16);
 }
+function _array2string(buf) {
+	return String.fromCharCode.apply(null, new Uint16Array(buf));
+}
+function _string2array(str) {
+	var buf = new ArrayBuffer(str.length * 2); // 2 bytes for each char
+	var bufView = new Uint16Array(buf);
+	for (var i = 0, strLen = str.length; i < strLen; i++) {
+		bufView[i] = str.charCodeAt(i);
+	}
+	return buf;
+}
+
 function _loopforever() {
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
@@ -80,11 +98,11 @@ function _loopforever() {
 function _getCommand(command, arguments) {
 	return new Promise((resolve, reject) => {
 		var http = new XMLHttpRequest();
-		var query = arguments;
+		var query = encodeURI(arguments);
 		if (typeof arguments === 'object') {
 			query = JSON.stringify(query);
 		}
-		http.open('GET', `${command}/${query}`, true);
+		http.open('GET', `_${command}?${query}`, true);
 		http.onreadystatechange = () => {
 			if (http.readyState === 4) {
 				let data = http.responseText;
@@ -104,7 +122,7 @@ function _getCommand(command, arguments) {
 function _postCommand(command, arguments) {
 	return new Promise((resolve, reject) => {
 		var http = new XMLHttpRequest();
-		http.open('POST', command, true);
+		http.open('POST', `_${command}`, true);
 		http.onreadystatechange = () => {
 			if (http.readyState === 4) {
 				let data = http.responseText;
@@ -124,15 +142,13 @@ function _postCommand(command, arguments) {
 class Float {
 	constructor(float) {
 		const result = typeof float !== 'undefined' && typeof float.value !== 'undefined' ? float.value : float || 0.0;
-		this.float = result.toPrecision(6).replace(/([^\.])0+$/, '$1');
+		this.float = result.toPrecision(8).replace(/([^\.])0+$/, '$1');
 	}
-
 	get value() {
 		return parseFloat(this.float);
 	}
-
 	set value(float) {
 		const result = typeof float !== 'undefined' && typeof float.value !== 'undefined' ? float.value : float || 0.0;
-		this.float = result.toPrecision(6).replace(/([^\.])0+$/, '$1');
+		this.float = result.toPrecision(8).replace(/([^\.])0+$/, '$1');
 	}
 }

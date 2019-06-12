@@ -1,4 +1,3 @@
-function _pokeshort(bank, offset, value) {
-	const view = new DataView(bank);
-	view.setUint16(offset, value);
+function _pokeshort(bank, offset, short) {
+	return _writeshort(bank, short, offset);
 }

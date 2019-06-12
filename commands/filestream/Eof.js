@@ -1,4 +1,4 @@
-async function _eof(stream) {
+function _eof(stream) {
 	const output = stream.data;
-	return await stream.position >= output.length;
+	return stream.position >= output.length;
 }
