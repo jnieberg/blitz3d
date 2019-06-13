@@ -3,10 +3,10 @@
 /* eslint-env browser, node */
 var fs = require('fs');
 var path = require('path');
-var commandsAsync = ['delay', 'input', 'waitkey', 'getkey', 'keyhit', 'keydown', 'waitmouse', 'getmouse', 'mousehit', 'mousedown', 'loopforever', 'readfile', 'closefile', 'writestring'].map((res) => `_${res}`);
+var commandsAsync = ['delay', 'input', 'waitkey', 'getkey', 'keyhit', 'keydown', 'waitmouse', 'getmouse', 'mousehit', 'mousedown', 'loopforever', 'readfile', 'closefile', 'writestring', 'openmovie'].map((res) => `_${res}`);
 var commandsStatic = ['class', 'in', 'of', 'var', 'case', 'select'];
-var commandsReturn = ['resizebank', 'closedir', 'closetcpstream', 'closetcpserver', 'writeline', 'writestring', 'writebyte', 'writeint', 'writebytes', 'writefloat', 'writeshort'];
-var variableReserved = ['abstract', 'instanceof', 'super', 'boolean', 'enum', 'int', 'switch', 'break', 'export', 'interface', 'synchronized', 'byte', 'extends', 'let', 'this', 'long', 'throw', 'catch', 'final', 'native', 'throws', 'char', 'finally', 'new', 'transient', 'class', 'float', 'null', 'const', 'package', 'try', 'continue', 'private', 'typeof', 'debugger', 'goto', 'protected', 'var', 'public', 'void', 'delete', 'implements', 'volatile', 'import', 'short', 'double', 'in', 'static', 'with', 'alert', 'frames', 'outerHeight', 'all', 'frameRate', 'outerWidth', 'anchor', 'packages', 'anchors', 'getClass', 'pageXOffset', 'area', 'hasOwnProperty', 'pageYOffset', 'Array', 'hidden', 'parent', 'assign', 'history', 'parseFloat', 'blur', 'image', 'parseInt', 'button', 'images', 'password', 'checkbox', 'Infinity', 'pkcs11', 'clearInterval', 'isFinite', 'plugin', 'clearTimeout', 'isNaN', 'prompt', 'clientInformation', 'isPrototypeOf', 'propertyIsEnum', 'close', 'java', 'prototype', 'closed', 'JavaArray', 'radio', 'confirm', 'JavaClass', 'reset', 'constructor', 'JavaObject', 'screenX', 'crypto', 'JavaPackage', 'screenY', 'Date', 'innerHeight', 'scroll', 'decodeURI', 'innerWidth', 'secure', 'decodeURIComponent', 'layer', 'defaultStatus', 'layers', 'self', 'document', 'length', 'setInterval', 'element', 'link', 'setTimeout', 'elements', 'location', 'status', 'embed', 'Math', 'String', 'embeds', 'mimeTypes', 'submit', 'encodeURI', 'name', 'taint', 'encodeURIComponent', 'NaN', 'text', 'escape', 'navigate', 'textarea', 'eval', 'navigator', 'top', 'event', 'Number', 'toString', 'fileUpload', 'Object', 'undefined', 'focus', 'offscreenBuffering', 'unescape', 'form', 'open', 'untaint', 'forms', 'opener', 'valueOf', 'frame', 'option', 'window', 'onbeforeunload', 'ondragdrop', 'onkeyup', 'onmouseover', 'onblur', 'onerror', 'onload', 'onmouseup', 'ondragdrop', 'onfocus', 'onmousedown', 'onreset', 'onclick', 'onkeydown', 'onmousemove', 'onsubmit', 'oncontextmenu', 'onkeypress', 'onmouseout', 'onunload'];
+var commandsReturn = ['resizebank', 'closedir', 'closetcpstream', 'closetcpserver', 'writeline', 'writestring', 'writebyte', 'writeint', 'writebytes', 'writefloat', 'writeshort', 'closemovie'];
+var variableReserved = ['abstract', 'instanceof', 'super', 'boolean', 'enum', 'int', 'switch', 'break', 'export', 'interface', 'synchronized', 'byte', 'extends', 'let', 'this', 'long', 'throw', 'catch', 'final', 'native', 'throws', 'char', 'finally', 'new', 'transient', 'class', 'float', 'null', 'package', 'try', 'continue', 'private', 'typeof', 'debugger', 'goto', 'protected', 'var', 'public', 'void', 'delete', 'implements', 'volatile', 'import', 'short', 'double', 'in', 'static', 'with', 'alert', 'frames', 'outerHeight', 'all', 'frameRate', 'outerWidth', 'anchor', 'packages', 'anchors', 'getClass', 'pageXOffset', 'area', 'hasOwnProperty', 'pageYOffset', 'Array', 'hidden', 'parent', 'assign', 'history', 'parseFloat', 'blur', 'image', 'parseInt', 'button', 'images', 'password', 'checkbox', 'Infinity', 'pkcs11', 'clearInterval', 'isFinite', 'plugin', 'clearTimeout', 'isNaN', 'prompt', 'clientInformation', 'isPrototypeOf', 'propertyIsEnum', 'close', 'java', 'prototype', 'closed', 'JavaArray', 'radio', 'confirm', 'JavaClass', 'reset', 'constructor', 'JavaObject', 'screenX', 'crypto', 'JavaPackage', 'screenY', 'Date', 'innerHeight', 'scroll', 'decodeURI', 'innerWidth', 'secure', 'decodeURIComponent', 'layer', 'defaultStatus', 'layers', 'self', 'document', 'length', 'setInterval', 'element', 'link', 'setTimeout', 'elements', 'location', 'status', 'embed', 'Math', 'String', 'embeds', 'mimeTypes', 'submit', 'encodeURI', 'name', 'taint', 'encodeURIComponent', 'NaN', 'text', 'escape', 'navigate', 'textarea', 'eval', 'navigator', 'top', 'event', 'Number', 'toString', 'fileUpload', 'Object', 'undefined', 'focus', 'offscreenBuffering', 'unescape', 'form', 'open', 'untaint', 'forms', 'opener', 'valueOf', 'frame', 'option', 'window', 'onbeforeunload', 'ondragdrop', 'onkeyup', 'onmouseover', 'onblur', 'onerror', 'onload', 'onmouseup', 'ondragdrop', 'onfocus', 'onmousedown', 'onreset', 'onclick', 'onkeydown', 'onmousemove', 'onsubmit', 'oncontextmenu', 'onkeypress', 'onmouseout', 'onunload'];
 var commands = [];
 var commandsFiles = [];
 const baseDirectory = process.cwd();
@@ -192,7 +192,7 @@ function parsePart(part) {
 	result = result.replace(/(\b[a-z][a-zA-Z0-9$#%]*?\b)\\(\b[a-z][a-zA-Z0-9$#%]*?\b)/gim, '$1.$2');
 	result = result.replace(/\breturn\b *(.*?);/gim, 'return new Promise(resolve => {\nresolve($1);\n});');
 	result = result.replace(/^end function;/gim, 'return new Promise(resolve => {\nresolve();\n});\n}');
-	result = result.replace(/^end;/gim, 'throw new Error(\'Program has ended\');');
+	result = result.replace(/^end;/gim, 'throw new Error();');
 	result = result.replace(/^(wend|next);/gim, '}');
 	result = result.replace(/^end *.*?;/gim, '}');
 	result = result.replace(/%([01]+?\b)/gm, 'parseInt(\'$1\', 2) - 4294967296');
@@ -219,7 +219,7 @@ function parsePart(part) {
 		exit: 'break;',
 		and: ' && $1',
 		or: ' || $1',
-		not: '!$1'
+		'not\\(': '!($1'
 	};
 	for (const c in commandsMap) {
 		if (c && commandsMap[c]) {

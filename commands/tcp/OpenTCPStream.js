@@ -1,9 +1,3 @@
-function _opentcpstream(ip, port) {
-	return {
-		name: `${ip.trim()}:${port}`,
-		stream: '',
-		data: '',
-		readonly: false,
-		position: 0
-	};
+async function _opentcpstream(ip, port) {
+	return await _postCommand('opentcpstream', { ip: ip, port: port });
 }

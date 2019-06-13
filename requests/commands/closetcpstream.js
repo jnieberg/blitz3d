@@ -1,9 +1,12 @@
 const { netServer } = require('./createtcpserver');
 
 exports.fn = (res, query) => {
-	if (netServer[query.name] && netServer[query.name].client[query.stream]) {
-		netServer[query.name].client[query.stream].socket.end();
+	const client = netServer[query.name] && netServer[query.name].client[query.stream];
+	if (client) {
+		client.socket.end();
 		res.end('1');
+		console.log(`[SYSTEM] - http://${query.name}:${query.stream} TCP client closed.`);
 	}
-	res.end('0');
+	res.status(404).end('0');
+	console.log(`[SYSTEM] - http://${query.name}:${query.stream} TCP client was already closed.`);
 }

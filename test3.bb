@@ -3,6 +3,7 @@
 ; Run the above code first, then run this ... they will 'talk'
 
 ; Create a Client and push data
+TCPTimeouts 5000, 1000
 
 strmGame=OpenTCPStream("127.0.0.1",8080)
 

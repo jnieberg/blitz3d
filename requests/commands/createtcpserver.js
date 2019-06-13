@@ -26,10 +26,8 @@ exports.fn = (res, query) => {
 						console.log(`[SYSTEM] - http://127.0.0.1:${port}:${socket.remotePort} TCP client data sent.`);
 					})
 					.on('close', () => {
-						console.log(`[SYSTEM] - http://127.0.0.1:${port}:${socket.remotePort} TCP client closed.`);
 						delete this.netServer[name].client[socket.remotePort];
 					});
-				socket.pipe(socket);
 			})
 			.on('close', () => {
 				console.log(`[SYSTEM] - http://127.0.0.1:${port} TCP server closed.`);

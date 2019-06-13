@@ -22,14 +22,14 @@ module.exports = {
 		const fileStream = fs.createReadStream(`${baseDirectory}${requestUrl.pathname}`);
 		((fStream, resp) => {
 			let body = '';
-			if (mime === 'image/png') {
+			if (mime === 'image/png' || mime === 'application/ogg') {
 				fStream.setEncoding('binary');
 			}
 			fStream.on('data', (data) => {
 				body = body + data;
 			});
 			fStream.on('end', () => {
-				if (mime === 'image/png') {
+				if (mime === 'image/png' || mime === 'application/ogg') {
 					resp.end(body, 'binary');
 				}
 				resp.end(body);
@@ -58,7 +58,7 @@ _graphics(400, 300, 32, 1);
 await _changedir('${workingDirectory}');
 ${result}
 } catch(err) {
-console.log(err.message);
+if(err && err.message) console.error(err);
 }
 ${blitz.endProgram()}
 })();`);

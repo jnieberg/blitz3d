@@ -5,5 +5,5 @@ exports.fn = (res, query) => {
 		netServer[query].server.close();
 		res.end('1');
 	}
-	res.end('0');
+	res.status(404).end('0');
 }

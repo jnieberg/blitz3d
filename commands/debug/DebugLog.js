@@ -5,7 +5,9 @@ function _debuglog(text, color = '#fff') {
 	((txt, i) => {
 		setTimeout(() => {
 			const debugSpan = document.querySelector(`.debug code span#debug-log-${i}`);
-			debugSpan.innerHTML += txt;
+			if (debugSpan) {
+				debugSpan.innerHTML += txt;
+			}
 			document.querySelector('.debug').scrollTo(0, document.querySelector('.debug').scrollHeight);
 		}, 100);
 	})(text, _debugLogCount);

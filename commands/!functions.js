@@ -26,8 +26,7 @@ function _roundFloat(float) {
 }
 
 var _eventHandlers = {};
-function _addListener(event, handler, id = 'anonymous') {
-	const node = document;//document.querySelector('#blitz');
+function _addListener(event, handler, id = 'anonymous', node = document) {
 	if (!(node in _eventHandlers)) {
 		// _eventHandlers stores references to nodes
 		_eventHandlers[node] = {};
@@ -42,8 +41,7 @@ function _addListener(event, handler, id = 'anonymous') {
 		node.addEventListener(event, handler, false);
 	}
 }
-function _removeListener(event, id) {
-	const node = document;//document.querySelector('#blitz');
+function _removeListener(event, id = 'anonymous', node = document) {
 	if (node in _eventHandlers) {
 		var handlers = _eventHandlers[node];
 		if (event in handlers) {
@@ -141,14 +139,14 @@ function _postCommand(command, arguments) {
 
 class Float {
 	constructor(float) {
-		const result = typeof float !== 'undefined' && typeof float.value !== 'undefined' ? float.value : float || 0.0;
+		const result = float !== null && typeof float !== 'undefined' && typeof float.value !== 'undefined' ? float.value : float || 0.0;
 		this.float = result.toPrecision(8).replace(/([^\.])0+$/, '$1');
 	}
 	get value() {
 		return parseFloat(this.float);
 	}
 	set value(float) {
-		const result = typeof float !== 'undefined' && typeof float.value !== 'undefined' ? float.value : float || 0.0;
+		const result = float !== null && typeof float !== 'undefined' && typeof float.value !== 'undefined' ? float.value : float || 0.0;
 		this.float = result.toPrecision(8).replace(/([^\.])0+$/, '$1');
 	}
 }

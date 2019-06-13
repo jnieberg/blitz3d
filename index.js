@@ -94,6 +94,9 @@ const server = app
 	.get('*.png', (req, res) => {
 		parseRequest(req, res, 'image/png');
 	})
+	.get('*.ogv', (req, res) => {
+		parseRequest(req, res, 'application/ogg');
+	})
 	.get('/', (req, res) => {
 		res.end(writeHtml(req, `<textarea id="blitzText">; Your custom code</textarea>
 <canvas id="blitz" width="400" height="300"></canvas>
@@ -122,10 +125,10 @@ function _eventTextExecute(callback = () => {}) {
 			script.innerHTML += '(async function Main() {\\n';
 			script.innerHTML += 'try {\\n';
 			script.innerHTML += '_graphics(400, 300, 32, 1);\\n';
-			script.innerHTML += 'await _changedir('${workingDirectory}');\\n';
+			script.innerHTML += 'await _changedir(\\'${workingDirectory}\\');\\n';
 			script.innerHTML += xhr.response + '\\n';
 			script.innerHTML += '} catch(err) {\\n';
-			script.innerHTML += 'console.log(err.message);\\n';
+			script.innerHTML += 'if(err && err.message) console.error(err);\\n';
 			script.innerHTML += '}\\n';
 			script.innerHTML += '${blitz.endProgram().replace(/'/g, '\\\'')}\\n';
 			script.innerHTML += '})();';

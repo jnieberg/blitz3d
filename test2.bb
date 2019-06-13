@@ -1,27 +1,34 @@
-; OpenTCPStream/CloseTCPStream Example
+; CreateTCPServer, CloseTCPServer, AcceptTCPStream Example
+; This code is in two parts, and needs to be run seperately on the same machine
 
-Print "Connecting..."
-tcp=OpenTCPStream( "www.nu.nl",80 )
-print tcpstreamip(tcp)
-print tcpstreamport(tcp)
-If Not tcp Print "Failed.":WaitKey:End
+; --- Start first code set ---
+; Create a server and listen for push
+TCPTimeouts 1000, 1000
 
-Print "Connected! Sending request..."
+svrGame=CreateTCPServer(8080)
 
-WriteLine tcp,"GET http://www.nu.nl"
-WriteLine tcp,Chr$(10)
+Print svrGame
 
-If Eof(tcp) Print "Failed.":WaitKey:End
+If svrGame<>0 Then 
+Print "Server started successfully."
+Else
+Print "Server failed to start."
+End
+End If
 
-Print "Request sent! Waiting for reply..."
-
-While Not Eof(tcp)
-Print ReadLine$( tcp )
+While Not KeyHit(1)
+;strStream=AcceptTCPStream(svrGame)
+If strStream Then 
+Print ReadString$(strStream)
+Delay 2000
+CloseTCPServer svrGame
+End
+Else 
+Print "No word from Apollo X yet ..."
+Delay 1000
+End If 
 Wend
 
-If Eof(tcp)=1 Then Print "Success!" Else Print "Error!"
-
-CloseTCPStream tcp
-
-WaitKey
 End
+
+; --- End first code set ---
