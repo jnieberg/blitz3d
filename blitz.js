@@ -3,9 +3,9 @@
 /* eslint-env browser, node */
 var fs = require('fs');
 var path = require('path');
-var commandsAsync = ['delay', 'input', 'waitkey', 'getkey', 'keyhit', 'keydown', 'waitmouse', 'getmouse', 'mousehit', 'mousedown', 'loopforever', 'readfile', 'closefile', 'writestring', 'openmovie'].map((res) => `_${res}`);
+var commandsAsync = ['delay', 'input', 'waitkey', 'getkey', 'keyhit', 'keydown', 'waitmouse', 'getmouse', 'mousehit', 'mousedown', 'loopforever', 'readfile', 'closefile', 'writestring', 'openmovie', 'loadsound', 'playsound', 'playmusic', 'channelplaying'].map((res) => `_${res}`);
 var commandsStatic = ['class', 'in', 'of', 'var', 'case', 'select'];
-var commandsReturn = ['resizebank', 'closedir', 'closetcpstream', 'closetcpserver', 'writeline', 'writestring', 'writebyte', 'writeint', 'writebytes', 'writefloat', 'writeshort', 'closemovie'];
+var commandsReturn = ['resizebank', 'closedir', 'closetcpstream', 'closetcpserver', 'writeline', 'writestring', 'writebyte', 'writeint', 'writebytes', 'writefloat', 'writeshort', 'closemovie', 'freesound'];
 var variableReserved = ['abstract', 'instanceof', 'super', 'boolean', 'enum', 'int', 'switch', 'break', 'export', 'interface', 'synchronized', 'byte', 'extends', 'let', 'this', 'long', 'throw', 'catch', 'final', 'native', 'throws', 'char', 'finally', 'new', 'transient', 'class', 'float', 'null', 'package', 'try', 'continue', 'private', 'typeof', 'debugger', 'goto', 'protected', 'var', 'public', 'void', 'delete', 'implements', 'volatile', 'import', 'short', 'double', 'in', 'static', 'with', 'alert', 'frames', 'outerHeight', 'all', 'frameRate', 'outerWidth', 'anchor', 'packages', 'anchors', 'getClass', 'pageXOffset', 'area', 'hasOwnProperty', 'pageYOffset', 'Array', 'hidden', 'parent', 'assign', 'history', 'parseFloat', 'blur', 'image', 'parseInt', 'button', 'images', 'password', 'checkbox', 'Infinity', 'pkcs11', 'clearInterval', 'isFinite', 'plugin', 'clearTimeout', 'isNaN', 'prompt', 'clientInformation', 'isPrototypeOf', 'propertyIsEnum', 'close', 'java', 'prototype', 'closed', 'JavaArray', 'radio', 'confirm', 'JavaClass', 'reset', 'constructor', 'JavaObject', 'screenX', 'crypto', 'JavaPackage', 'screenY', 'Date', 'innerHeight', 'scroll', 'decodeURI', 'innerWidth', 'secure', 'decodeURIComponent', 'layer', 'defaultStatus', 'layers', 'self', 'document', 'length', 'setInterval', 'element', 'link', 'setTimeout', 'elements', 'location', 'status', 'embed', 'Math', 'String', 'embeds', 'mimeTypes', 'submit', 'encodeURI', 'name', 'taint', 'encodeURIComponent', 'NaN', 'text', 'escape', 'navigate', 'textarea', 'eval', 'navigator', 'top', 'event', 'Number', 'toString', 'fileUpload', 'Object', 'undefined', 'focus', 'offscreenBuffering', 'unescape', 'form', 'open', 'untaint', 'forms', 'opener', 'valueOf', 'frame', 'option', 'window', 'onbeforeunload', 'ondragdrop', 'onkeyup', 'onmouseover', 'onblur', 'onerror', 'onload', 'onmouseup', 'ondragdrop', 'onfocus', 'onmousedown', 'onreset', 'onclick', 'onkeydown', 'onmousemove', 'onsubmit', 'oncontextmenu', 'onkeypress', 'onmouseout', 'onunload'];
 var commands = [];
 var commandsFiles = [];
@@ -116,20 +116,10 @@ function parseCommands(result) {
 }
 
 function parsePrimitives(result, sign, obj) {
-	//const rxNewAF = new RegExp(`^(\\b[a-zA-Z0-9_\\.]+?)${sign} *= *(_[a-zA-Z0-9_$#%]*?\\b)(.*?);`, 'gm');
 	const rxNewA = new RegExp(`^(\\b[a-zA-Z0-9_\\.]+?)${sign} *= *(.*?);`, 'gm');
-	//result = result.replace(rxNewAF, `$1${sign} = new ${obj}($2_f$3);`);
 	result = result.replace(rxNewA, `$1${sign} = new ${obj}($2);`);
 	if (sign === '#') {
-		result = result.replace(/([0-9\-]*\.[0-9\-]+)/gm, `new ${obj}($1)`);
-		//const primList = [];
-		//for (var prim of primList) {
-		//const varRx = new RegExp(`(\\b(?:[a-zA-Z0-9_]+?\\.)?${prim}\\b)${sign}?(?! *=)`, 'gim');
-		//result = result.replace(varRx, '$1.value');
-		//const varRx2 = new RegExp(`(\\b(?:[a-zA-Z0-9_]+?\\.)?${prim}\\b)${sign}? *= *(_[a-zA-Z0-9_$#%]+?\\b)`, 'gim');
-		//result = result.replace(varRx2, '$1 = $2_f');
-		//}
-		//result = result.replace(/(_[a-zA-Z0-9_$#%]+?)\b\((.*?)\.value\b(.*?)\)/gm, `$1(new ${obj}($2.value$3))`);
+		result = result.replace(/([0-9\-]*\.[0-9\-]+\+\-\*\/)*([0-9\-]*\.[0-9\-]+)/gm, `new ${obj}($1$2)`);
 	}
 	const rxList = new RegExp(`(\\b[a-zA-Z0-9_\\.]+?)${sign}`, 'gm');
 	result = result.replace(rxList, '$1');
@@ -203,7 +193,7 @@ function parsePart(part) {
 	result = result.replace(/(\b[a-zA-Z0-9$#%]+\b) *shl *(\b[a-zA-Z0-9$#%]+\b)/gm, '($1 << $2)');
 	result = result.replace(/(\b[a-zA-Z0-9$#%]+\b) *shr *(\b[a-zA-Z0-9$#%]+\b)/gm, '($1 >> $2)');
 	result = result.replace(/(\b[a-zA-Z0-9$#%]+\b) *sar *(\b[a-zA-Z0-9$#%]+\b)/gm, '($1 >>> $2)');
-
+	result = result.replace(/\bnot *(\b[a-zA-Z0-9_$#%\(\)]+\b)/gm, '!($1)');
 	const commandsMap = {
 		select: 'switch($1) {',
 		case: 'break;\ncase $1:',
@@ -219,7 +209,7 @@ function parsePart(part) {
 		exit: 'break;',
 		and: ' && $1',
 		or: ' || $1',
-		'not\\(': '!($1'
+		//'not\\(': '!($1'
 	};
 	for (const c in commandsMap) {
 		if (c && commandsMap[c]) {

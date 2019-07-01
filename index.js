@@ -39,6 +39,8 @@ function writeHtml(req, body) {
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<script src="tools/howler.core.js"></script>
+	<script src="tools/howler.spatial.js"></script>
 	<link rel="stylesheet" type="text/css" href="css/blitz3d.css">
 	<title>Blitz3D - ${requestUrl.pathname.replace(/^\//, '')}</title>
 </head>
@@ -82,6 +84,9 @@ const server = app
 	.get('/blitz3d.js', (req, res) => {
 		res.end(blitz.parseBlitz());
 	})
+	.get('/tools/*.js', (req, res) => {
+		parseRequest(req, res, 'text/javascript');
+	})
 	.get('*.js', (req, res) => {
 		parseRequestBB(req, res);
 		res.setTimeout(timeoutTimer, () => {
@@ -96,6 +101,9 @@ const server = app
 	})
 	.get('*.ogv', (req, res) => {
 		parseRequest(req, res, 'application/ogg');
+	})
+	.get('*.wav', (req, res) => {
+		parseRequest(req, res, 'audio/mpeg');
 	})
 	.get('/', (req, res) => {
 		res.end(writeHtml(req, `<textarea id="blitzText">; Your custom code</textarea>

@@ -149,4 +149,7 @@ class Float {
 		const result = float !== null && typeof float !== 'undefined' && typeof float.value !== 'undefined' ? float.value : float || 0.0;
 		this.float = result.toPrecision(8).replace(/([^\.])0+$/, '$1');
 	}
+	valueOf = () => {
+		return this.value;
+	};
 }

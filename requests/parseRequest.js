@@ -1,5 +1,7 @@
 const fs = require('fs');
 const url = require('url');
+const mm = require('music-metadata');
+const util = require('util');
 const baseDirectory = process.cwd();
 const workingDirectory = baseDirectory.replace(/\\/g, '/');
 const blitz = require('../blitz');
@@ -10,34 +12,50 @@ const status = {
 	notFound: 404
 };
 
-module.exports = {
-	parseRequest: (req, res, mime) => {
-		const requestUrl = url.parse(req.url);
-		res.writeHead(status.ok, {
+function parseRequestEnd(requestUrl, res, mime, sampleRate = null, stat = status.ok) {
+	const fileStream = fs.createReadStream(`${baseDirectory}${requestUrl.pathname}`);
+	((fStream, resp) => {
+		res.writeHead(stat, {
 			'Accept-Ranges': 'bytes',
 			'Transfer-Encoding': 'chunked',
 			'Vary': 'Accept-Encoding',
-			'Content-Type': mime
+			'Content-Type': mime,
+			'Sample-Rate': sampleRate
 		});
-		const fileStream = fs.createReadStream(`${baseDirectory}${requestUrl.pathname}`);
-		((fStream, resp) => {
-			let body = '';
-			if (mime === 'image/png' || mime === 'application/ogg') {
-				fStream.setEncoding('binary');
+		const isBinary = (mime === 'audio/mpeg' || mime === 'image/png' || mime === 'application/ogg');
+		let body = '';
+
+		if (isBinary) {
+			fStream.setEncoding('binary');
+		}
+		fStream.on('data', (data) => {
+			body = body + data;
+		});
+		fStream.on('end', () => {
+			if (isBinary) {
+				resp.end(body, 'binary');
 			}
-			fStream.on('data', (data) => {
-				body = body + data;
-			});
-			fStream.on('end', () => {
-				if (mime === 'image/png' || mime === 'application/ogg') {
-					resp.end(body, 'binary');
-				}
-				resp.end(body);
-			});
-			fStream.on('error', (err) => {
-				resp.status(404).end();
-			});
-		})(fileStream, res);
+			resp.end(body);
+		});
+		fStream.on('error', (err) => {
+			resp.status(status.notFound).end();
+		});
+	})(fileStream, res);
+}
+
+module.exports = {
+	parseRequest: (req, res, mime) => {
+		const requestUrl = url.parse(req.url);
+		if (mime === 'audio/mpeg') {
+			mm.parseFile(`${baseDirectory}${requestUrl.pathname}`)
+				.then(metadata => {
+					parseRequestEnd(requestUrl, res, mime, metadata.format.sampleRate);
+				}).catch(() => {
+					parseRequestEnd(requestUrl, res, mime, null, status.notFound);
+				});
+		} else {
+			parseRequestEnd(requestUrl, res, mime);
+		}
 	},
 	parseRequestBB: (req, res) => {
 		const requestUrl = url.parse(req.url);

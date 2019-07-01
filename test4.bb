@@ -1,27 +1,12 @@
-graphics 1024, 768, 32, 2
-; OpenTCPStream/CloseTCPStream Example
+; Channel examples
 
-Print "Connecting..."
-TCPTimeouts 1000, 1000
-tcp=OpenTCPStream( "www.google.com",80 )
+Print "Loading sound ..."
+; Load the sample - you'll need to point this to a sound on your computer
+; For best results, make it about 5-10 seconds...
+sndWave=LoadSound("media/zoom.wav")
 
-If Not tcp Print "Failed.":WaitKey:End
-
-Print "Connected! Sending request..."
-
-WriteLine tcp,"GET\r\n\r\n"
-
-If Eof(tcp) Print "Failed.":WaitKey:End
-
-Print "Request sent! Waiting for reply..."
-
-While Not Eof(tcp)
-Print ReadLine$( tcp )
-Wend
-
-If Eof(tcp)=1 Then Print "Success!" Else Print "Error!"
-
-CloseTCPStream tcp
-
-WaitKey
-End
+Print "Playing full sample until sound is done ..."
+chnWave=PlaySound(sndWave) 
+While ChannelPlaying(chnWave)
+Wend 
+Print "All done!"
