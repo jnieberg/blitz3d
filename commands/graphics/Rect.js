@@ -1,11 +1,13 @@
 function _rect(x, y, w, h, solid) {
-	if (solid) {
-		_graphicsContext.fillStyle = _colorRGB;
-		_graphicsContext.fillRect(x + _originX, y + _originY, w, h);
-	} else {
-		_graphicsContext.strokeStyle = _colorRGB;
-		_graphicsContext.beginPath();
-		_graphicsContext.rect(x + _originX, y + _originY, w, h);
-		_graphicsContext.stroke();
+	if (_graphicsBuffer.context) {
+		if (solid) {
+			_graphicsBuffer.context.fillStyle = _colorRGB();
+			_graphicsBuffer.context.fillRect(x + _originX, y + _originY, w, h);
+		} else {
+			_graphicsBuffer.context.strokeStyle = _colorRGB();
+			_graphicsBuffer.context.beginPath();
+			_graphicsBuffer.context.rect(x + _originX, y + _originY, w, h);
+			_graphicsBuffer.context.stroke();
+		}
 	}
 }

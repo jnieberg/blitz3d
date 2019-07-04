@@ -5,12 +5,12 @@ async function _input(input) {
 	_saveScreen();
 	_print(`${input}`, true);
 	function blink() {
-		_rect(_printX + _graphicsContext.measureText(input + _inputText).width + 1, _printY, _setFontCurrent.height * .5, _setFontCurrent.height, true);
+		_rect(_printX + _graphicsBuffer.context.measureText(input + _inputText).width + 1, _printY, _setFontCurrent.height * .5, _setFontCurrent.height, true);
 		setTimeout(() => {
-			const col = _colorRGB;
+			const col = _colorRGB();
 			_color(0, 0, 0);
-			_rect(_printX + _graphicsContext.measureText(input + _inputText).width, _printY - 1, _setFontCurrent.height * .5 + 2, _setFontCurrent.height + 2, true);
-			_colorRGB = col;
+			_rect(_printX + _graphicsBuffer.context.measureText(input + _inputText).width, _printY - 1, _setFontCurrent.height * .5 + 2, _setFontCurrent.height + 2, true);
+			_colorRGB() = col;
 		}, 500);
 	}
 	blink();
@@ -34,7 +34,7 @@ async function _input(input) {
 			_inputText = _inputText + key;
 		}
 		_loadScreen();
-		_rect(_printX + _graphicsContext.measureText(input + _inputText).width + 1, _printY, _setFontCurrent.height * .5, _setFontCurrent.height, true);
+		_rect(_printX + _graphicsBuffer.context.measureText(input + _inputText).width + 1, _printY, _setFontCurrent.height * .5, _setFontCurrent.height, true);
 		_print(`${input}${_inputText}`, true);
 	}
 }

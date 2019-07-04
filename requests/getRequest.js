@@ -9,6 +9,7 @@ exports.getRequest = (req, callback) => {
 		const fn = file['fn'];
 		callback(fn, decodeURI(query));
 	} catch (err) {
+		console.log(err);
 		callback(() => { }, decodeURI(query));
 	}
 }

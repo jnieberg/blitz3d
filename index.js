@@ -96,8 +96,17 @@ const server = app
 	.get('*.css', (req, res) => {
 		parseRequest(req, res, 'text/css');
 	})
+	.get('*.jpg', (req, res) => {
+		parseRequest(req, res, 'image/jpeg');
+	})
+	.get('*.gif', (req, res) => {
+		parseRequest(req, res, 'image/gif');
+	})
 	.get('*.png', (req, res) => {
 		parseRequest(req, res, 'image/png');
+	})
+	.get('*.bmp', (req, res) => {
+		parseRequest(req, res, 'image/bmp');
 	})
 	.get('*.ogv', (req, res) => {
 		parseRequest(req, res, 'application/ogg');
@@ -132,7 +141,7 @@ function _eventTextExecute(callback = () => {}) {
 			var script = document.createElement('script');
 			script.innerHTML += '(async function Main() {\\n';
 			script.innerHTML += 'try {\\n';
-			script.innerHTML += '_graphics(400, 300, 32, 1);\\n';
+			script.innerHTML += '_endgraphics();\\n';
 			script.innerHTML += 'await _changedir(\\'${workingDirectory}\\');\\n';
 			script.innerHTML += xhr.response + '\\n';
 			script.innerHTML += '} catch(err) {\\n';

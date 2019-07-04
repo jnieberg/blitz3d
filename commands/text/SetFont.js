@@ -6,12 +6,12 @@ var _setFontCurrent = {
 	italic: false,
 	underline: false
 };
-function _setfont(font) {
-	if (_graphicsContext) {
+function _setfont(font, buffer = _graphicsBuffer) {
+	if (buffer.context) {
 		_setFontCurrent = font;
 		const weightS = font.bold ? 'bold' : '';
 		const italicS = font.italic ? 'italic' : '';
 		const underlinedS = font.underline ? 'underline' : '';
-		_graphicsContext.font = `${italicS} ${weightS} ${font.size}px "${font.family}"`;
+		buffer.context.font = `${italicS} ${weightS} ${font.size}px "${font.family}"`;
 	}
 }

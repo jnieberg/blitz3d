@@ -11,6 +11,7 @@
   "dependencies": {
     "express": "^4.17.0",
     "fs": "0.0.1-security",
+    "jimp": "^0.6.4",
     "mkdirp": "^0.5.1",
     "music-metadata": "^4.2.0",
     "path": "^0.12.7",

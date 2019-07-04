@@ -14,6 +14,7 @@ exports.postRequest = (req, callback) => {
 			const fn = file['fn'];
 			callback(fn, query);
 		} catch (err) {
+			console.log(err);
 			callback(() => { }, query);
 		}
 	});

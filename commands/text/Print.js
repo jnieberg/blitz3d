@@ -1,5 +1,5 @@
 function _print(txt = 0 || '', fix) {
-	if (_graphicsContext) {
+	if (_graphicsBuffer.context) {
 		if (txt instanceof Float) {
 			txt = txt.float;
 		} else if (typeof txt === 'number') {
@@ -7,13 +7,13 @@ function _print(txt = 0 || '', fix) {
 				txt = _roundFloat(txt);
 			}
 		}
-		if (_printY + _setFontCurrent.height > _graphicsCanvas.height) {
+		if (_printY + _setFontCurrent.height > _graphicsBuffer.canvas.height) {
 			_saveScreen();
 			_loadScreen(0, -_setFontCurrent.height);
 			_printY = _printY - _setFontCurrent.height;
 		}
-		_graphicsContext.fillStyle = _colorRGB;
-		_graphicsContext.fillText(txt, _printX + _writeX + _originX, _printY + _originY);
+		_graphicsBuffer.context.fillStyle = _colorRGB();
+		_graphicsBuffer.context.fillText(txt, _printX + _writeX + _originX, _printY + _originY);
 		if (!fix) {
 			_printY = _printY + _setFontCurrent.height;
 		}

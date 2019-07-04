@@ -3,9 +3,9 @@
 /* eslint-env browser, node */
 var fs = require('fs');
 var path = require('path');
-var commandsAsync = ['delay', 'input', 'waitkey', 'getkey', 'keyhit', 'keydown', 'waitmouse', 'getmouse', 'mousehit', 'mousedown', 'loopforever', 'readfile', 'closefile', 'writestring', 'openmovie', 'loadsound', 'playsound', 'playmusic', 'channelplaying'].map((res) => `_${res}`);
+var commandsAsync = ['delay', 'input', 'waitkey', 'getkey', 'keyhit', 'keydown', 'waitmouse', 'getmouse', 'mousehit', 'mousedown', 'loopforever', 'readfile', 'closefile', 'writestring', 'openmovie', 'loadsound', 'playsound', 'playmusic', 'channelplaying', 'loadbuffer', 'savebuffer', 'loadimage', 'saveimage', 'loadanimimage'].map((res) => `_${res}`);
 var commandsStatic = ['class', 'in', 'of', 'var', 'case', 'select'];
-var commandsReturn = ['resizebank', 'closedir', 'closetcpstream', 'closetcpserver', 'writeline', 'writestring', 'writebyte', 'writeint', 'writebytes', 'writefloat', 'writeshort', 'closemovie', 'freesound'];
+var commandsReturn = ['resizebank', 'closedir', 'closetcpstream', 'closetcpserver', 'writeline', 'writestring', 'writebyte', 'writeint', 'writebytes', 'writefloat', 'writeshort', 'closemovie', 'freesound', 'freeimage'];
 var variableReserved = ['abstract', 'instanceof', 'super', 'boolean', 'enum', 'int', 'switch', 'break', 'export', 'interface', 'synchronized', 'byte', 'extends', 'let', 'this', 'long', 'throw', 'catch', 'final', 'native', 'throws', 'char', 'finally', 'new', 'transient', 'class', 'float', 'null', 'package', 'try', 'continue', 'private', 'typeof', 'debugger', 'goto', 'protected', 'var', 'public', 'void', 'delete', 'implements', 'volatile', 'import', 'short', 'double', 'in', 'static', 'with', 'alert', 'frames', 'outerHeight', 'all', 'frameRate', 'outerWidth', 'anchor', 'packages', 'anchors', 'getClass', 'pageXOffset', 'area', 'hasOwnProperty', 'pageYOffset', 'Array', 'hidden', 'parent', 'assign', 'history', 'parseFloat', 'blur', 'image', 'parseInt', 'button', 'images', 'password', 'checkbox', 'Infinity', 'pkcs11', 'clearInterval', 'isFinite', 'plugin', 'clearTimeout', 'isNaN', 'prompt', 'clientInformation', 'isPrototypeOf', 'propertyIsEnum', 'close', 'java', 'prototype', 'closed', 'JavaArray', 'radio', 'confirm', 'JavaClass', 'reset', 'constructor', 'JavaObject', 'screenX', 'crypto', 'JavaPackage', 'screenY', 'Date', 'innerHeight', 'scroll', 'decodeURI', 'innerWidth', 'secure', 'decodeURIComponent', 'layer', 'defaultStatus', 'layers', 'self', 'document', 'length', 'setInterval', 'element', 'link', 'setTimeout', 'elements', 'location', 'status', 'embed', 'Math', 'String', 'embeds', 'mimeTypes', 'submit', 'encodeURI', 'name', 'taint', 'encodeURIComponent', 'NaN', 'text', 'escape', 'navigate', 'textarea', 'eval', 'navigator', 'top', 'event', 'Number', 'toString', 'fileUpload', 'Object', 'undefined', 'focus', 'offscreenBuffering', 'unescape', 'form', 'open', 'untaint', 'forms', 'opener', 'valueOf', 'frame', 'option', 'window', 'onbeforeunload', 'ondragdrop', 'onkeyup', 'onmouseover', 'onblur', 'onerror', 'onload', 'onmouseup', 'ondragdrop', 'onfocus', 'onmousedown', 'onreset', 'onclick', 'onkeydown', 'onmousemove', 'onsubmit', 'oncontextmenu', 'onkeypress', 'onmouseout', 'onunload'];
 var commands = [];
 var commandsFiles = [];
@@ -139,9 +139,11 @@ function parsePart(part) {
 	result = result.replace(/\bif *(.+?) *$/gim, (res, a1) => {
 		if (a1.toLowerCase().indexOf('then') === -1) {
 			const parts = a1.match(/((not) *[^\n ]*?|[^\n ]*? *(=|<|>|and|or|xor) *[^\n ]*?|[^\n ])+/gi) || [];
-			const condition = parts[0];
-			parts.shift();
-			return `if ${condition} then\n${parts.join(' ')}\nend if`;
+			if (parts.length > 1) {
+				const condition = parts[0];
+				parts.shift();
+				return `if ${condition} then\n${parts.join(' ')}\nend if`;
+			}
 		}
 		return res;
 	});
@@ -164,9 +166,9 @@ function parsePart(part) {
 	result = result.replace(/^if *(.*?) *(?:then)?;/gim, 'if($1) {');
 	result = result.replace(/^else *if *(.*?) *(?:then)?;/gim, '} else if($1) {');
 	result = result.replace(/^else.*?;?/gim, '} else {');
-	result = result.replace(/^for *(.*?) *= *(.*?) *to *(.*?) step *\-(.*?);/gim, 'for(var $1=$2; $1<=$3; $1=$1-$4) {');
-	result = result.replace(/^for *(.*?) *= *(.*?) *to *(.*?) step *(.*?);/gim, 'for(var $1=$2; $1<=$3; $1=$1+$4) {');
-	result = result.replace(/^for *(.*?) *= *(.*?) *to *(.*?);/gim, 'for(var $1=$2; $1<=$3; $1+=1) {');
+	result = result.replace(/^for *(.*?) *= *(.*?) *to *(.*?) step *\-(.*?);/gim, 'for(var $1=$2,_len_$1=$3; $1<=_len_$1; $1=$1-$4) {');
+	result = result.replace(/^for *(.*?) *= *(.*?) *to *(.*?) step *(.*?);/gim, 'for(var $1=$2,_len_$1=$3; $1<=_len_$1; $1=$1+$4) {');
+	result = result.replace(/^for *(.*?) *= *(.*?) *to *(.*?);/gim, 'for(var $1=$2,_len_$1=$3; $1<=_len_$1; $1+=1) {');
 	result = result.replace(/^for *(.*?)\.(.*?) *= *each(.*?);/gim, 'for($1 of _each($3)) {');
 	result = result.replace(/(if|\bwhile)\b\((.*?)\) {$/gim, (state, m1, m2) => {
 		return `${m1}(${m2.replace(/([^<>\n])=([^<>\n])/g, '$1==$2')}) {`;
@@ -175,8 +177,20 @@ function parsePart(part) {
 	result = result.replace(/^while *(.*?);/gim, 'while($1) {');
 	result = result.replace(/^goto\((.*?)\);([\w\W]*?)\.\1;/gm, '$1: {\nbreak $1;\n$2}');
 	result = result.replace(/^\.(.+?);/gm, '$1:');
-	result = result.replace(/^dim\(([a-zA-Z0-9_$#%]+?)\((\d+?)\)\);/gim, 'var $1 = new Array($2);');
-	result = result.replace(/^([a-zA-Z0-9_$#%]+?)\(([a-zA-Z0-9_$#%]+?)\) *= */gim, '$1[$2] = ');
+
+	const dimListRx = [];
+	const dimList2Rx = [];
+	result = result.replace(/^_dim\(([a-zA-Z0-9$#%]+?)\((.+?)\)\);/gim, (state, m1, m2) => {
+		dimListRx.push(new RegExp(`(\\b${m1}\\b) *\\(`, 'gm'));
+		dimList2Rx.push(new RegExp(`(\\b${m1}\\b) *\\((.*?)\\) *= *(.*?);`, 'gm'));
+		return `var ${m1}=_dim(${m2})`;
+	});
+	for (const dimRx of dimList2Rx) {
+		result = result.replace(dimRx, '_setDim($1,[$2],$3);');
+	}
+	for (const dimRx of dimListRx) {
+		result = result.replace(dimRx, '_getDim($1,');
+	}
 
 	result = result.replace(/(\b[a-z][a-zA-Z0-9$#%]*?)\.([a-z][a-zA-Z0-9$#%]*?\b)/gim, '$1');
 	result = result.replace(/(\b[a-z][a-zA-Z0-9$#%]*?\b)\\(\b[a-z][a-zA-Z0-9$#%]*?\b)/gim, '$1.$2');
@@ -187,12 +201,18 @@ function parsePart(part) {
 	result = result.replace(/^end *.*?;/gim, '}');
 	result = result.replace(/%([01]+?\b)/gm, 'parseInt(\'$1\', 2) - 4294967296');
 	result = result.replace(/\$([a-zA-Z0-9$#%]+)/gim, '\'#$1\'');
-	result = result.replace(/(\b[a-zA-Z0-9$#%]+\b) *\^ *(\b[a-zA-Z0-9$#%]+\b)/gim, '($1 ** $2)');
-	result = result.replace(/(\b[a-zA-Z0-9$#%]+\b) *xor *(\b[a-zA-Z0-9$#%]+\b)/gim, '($1 ^ $2)');
-	result = result.replace(/(\b[a-zA-Z0-9$#%]+\b) *mod *(\b[a-zA-Z0-9$#%]+\b)/gm, '($1 % $2)');
-	result = result.replace(/(\b[a-zA-Z0-9$#%]+\b) *shl *(\b[a-zA-Z0-9$#%]+\b)/gm, '($1 << $2)');
-	result = result.replace(/(\b[a-zA-Z0-9$#%]+\b) *shr *(\b[a-zA-Z0-9$#%]+\b)/gm, '($1 >> $2)');
-	result = result.replace(/(\b[a-zA-Z0-9$#%]+\b) *sar *(\b[a-zA-Z0-9$#%]+\b)/gm, '($1 >>> $2)');
+	// result = result.replace(/(\b[a-zA-Z0-9$#%]+\b) *\^ *(\b[a-zA-Z0-9$#%]+\b)/gim, '($1 ** $2)');
+	// result = result.replace(/(\b[a-zA-Z0-9$#%]+\b) *xor *(\b[a-zA-Z0-9$#%]+\b)/gim, '($1 ^ $2)');
+	// result = result.replace(/(\b[a-zA-Z0-9$#%]+\b) *mod *(\b[a-zA-Z0-9$#%]+\b)/gm, '($1 % $2)');
+	// result = result.replace(/(\b[a-zA-Z0-9$#%]+\b) *shl *(\b[a-zA-Z0-9$#%]+\b)/gm, '($1 << $2)');
+	// result = result.replace(/(\b[a-zA-Z0-9$#%]+\b) *shr *(\b[a-zA-Z0-9$#%]+\b)/gm, '($1 >> $2)');
+	// result = result.replace(/(\b[a-zA-Z0-9$#%]+\b) *sar *(\b[a-zA-Z0-9$#%]+\b)/gm, '($1 >>> $2)');
+	result = result.replace(/ *\^ */gim, ' ** ');
+	result = result.replace(/ *xor */gim, ' ^ ');
+	result = result.replace(/ *mod */gim, ' % ');
+	result = result.replace(/ *shl */gim, ' << ');
+	result = result.replace(/ *shr */gim, ' >> ');
+	result = result.replace(/ *sar */gim, ' >>> ');
 	result = result.replace(/\bnot *(\b[a-zA-Z0-9_$#%\(\)]+\b)/gm, '!($1)');
 	const commandsMap = {
 		select: 'switch($1) {',
@@ -225,7 +245,7 @@ function parsePart(part) {
 
 	let varList = [];
 	result = result.replace(/^(\b[a-zA-Z0-9_]+?) *= */gm, (result, a1) => {
-		varList.push(`var ${a1};`);
+		varList.push(`var ${a1} = 0;`);
 		return result;
 	});
 	varList = varList.filter((item, pos) => varList.indexOf(item) === pos);

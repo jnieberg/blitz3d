@@ -1,6 +1,3 @@
 function _frontbuffer() {
-	return {
-		canvas: _setBufferCanvas[0],
-		context: _setBufferContext[0]
-	};
+	return _graphicsBufferList['_front'];
 }

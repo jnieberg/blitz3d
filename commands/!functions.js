@@ -1,9 +1,9 @@
 var _backupScreenImg = undefined;
-function _saveScreen(buffer = _currentBuffer()) {
+function _saveScreen(buffer = _graphicsBuffer) {
 	_backupScreenImg = buffer.context.getImageData(0, 0, buffer.canvas.width, buffer.canvas.height);
 }
 
-function _loadScreen(xOff, yOff, buffer = _currentBuffer()) {
+function _loadScreen(xOff, yOff, buffer = _graphicsBuffer) {
 	const x = xOff || 0;
 	const y = yOff || 0;
 	if (!_backupScreenImg) {
@@ -17,12 +17,8 @@ function _refreshClass(Cls) {
 	window['_var_' + Cls.name].map((res, index) => res._index = index);
 }
 
-function _currentBuffer() {
-	return _frontbuffer().canvas === _graphicsCanvas ? _frontbuffer() : _backbuffer();
-}
-
 function _roundFloat(float) {
-	return parseFloat(float.toPrecision(8)); //Math.round(float * 1000000) / 1000000;
+	return parseFloat(float.toPrecision(8));
 }
 
 var _eventHandlers = {};
@@ -115,6 +111,10 @@ function _getCommand(command, arguments) {
 		}
 		http.send();
 	});
+}
+
+function _bufferEditable(buffer = _graphicsBuffer) {
+	return buffer && buffer.context && !buffer.locked;
 }
 
 function _postCommand(command, arguments) {

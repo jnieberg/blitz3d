@@ -1,14 +1,9 @@
-; Load the sound (11,000 hertz)
+;HandleImage Example
 
-snd1Up = LoadSound("audiooneup.wav")
+Graphics 800,600,16
+Origin 50, 50
+gfxPlayer=LoadImage("media/chest.png")
 
-; Play the sound normally
-PlaySound snd1Up
-
-; Change the pitch UP and play it
-SoundPitch snd1Up, 11000*2 ;twice original frequency
-PlaySound snd1Up
-
-; Change the pitch down and play it
-SoundPitch snd1Up, 11000/2 ;1/2 original frequency
-PlaySound snd1Up 
+;HandleImage gfxPlayer,20,20
+DrawImage gfxPlayer,0,0
+WaitKey

@@ -1,12 +1,9 @@
-; Channel examples
+;HandleImage Example
 
-Print "Loading sound ..."
-; Load the sample - you'll need to point this to a sound on your computer
-; For best results, make it about 5-10 seconds...
-sndWave=LoadSound("media/zoom.wav")
+Graphics 800,600,16
+;Origin 100, 100
+gfxPlayer=LoadImage("media/chest.png")
 
-Print "Playing full sample until sound is done ..."
-chnWave=PlaySound(sndWave) 
-While ChannelPlaying(chnWave)
-Wend 
-Print "All done!"
+HandleImage gfxPlayer,20,20
+DrawImage gfxPlayer,0,0
+WaitKey

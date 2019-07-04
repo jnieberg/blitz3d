@@ -22,7 +22,7 @@ function parseRequestEnd(requestUrl, res, mime, sampleRate = null, stat = status
 			'Content-Type': mime,
 			'Sample-Rate': sampleRate
 		});
-		const isBinary = (mime === 'audio/mpeg' || mime === 'image/png' || mime === 'application/ogg');
+		const isBinary = (mime === 'audio/mpeg' || mime === 'image/jpeg' || mime === 'image/png' || mime === 'image/gif' || mime === 'image/bmp' || mime === 'application/ogg');
 		let body = '';
 
 		if (isBinary) {
@@ -70,9 +70,9 @@ module.exports = {
 			});
 			fStream.on('end', () => {
 				const result = blitz.parseBB(body);
-				resp.end(`(async function Main() {
+				resp.end(`(async () => {
 try {
-_graphics(400, 300, 32, 1);
+_endgraphics();
 await _changedir('${workingDirectory}');
 ${result}
 } catch(err) {
