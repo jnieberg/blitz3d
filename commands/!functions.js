@@ -81,10 +81,10 @@ function _string2array(str) {
 	return buf;
 }
 
-function _loopforever() {
+async function _async() {
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
-			resolve(true);
+			resolve(1);
 		});
 	});
 }
@@ -92,11 +92,11 @@ function _loopforever() {
 function _getCommand(command, arguments) {
 	return new Promise((resolve, reject) => {
 		var http = new XMLHttpRequest();
-		var query = encodeURI(arguments);
+		var query = arguments ? '?' + encodeURI(arguments) : '';
 		if (typeof arguments === 'object') {
-			query = JSON.stringify(query);
+			query = '?' + JSON.stringify(query);
 		}
-		http.open('GET', `_${command}?${query}`, true);
+		http.open('GET', `_${command}${query}`, true);
 		http.onreadystatechange = () => {
 			if (http.readyState === 4) {
 				let data = http.responseText;
@@ -113,11 +113,7 @@ function _getCommand(command, arguments) {
 	});
 }
 
-function _bufferEditable(buffer = _graphicsBuffer) {
-	return buffer && buffer.context && !buffer.locked;
-}
-
-function _postCommand(command, arguments) {
+function _postCommand(command, arguments = {}) {
 	return new Promise((resolve, reject) => {
 		var http = new XMLHttpRequest();
 		http.open('POST', `_${command}`, true);
@@ -135,6 +131,10 @@ function _postCommand(command, arguments) {
 		}
 		http.send(JSON.stringify(arguments));
 	});
+}
+
+function _bufferEditable(buffer = _graphicsBuffer) {
+	return buffer && buffer.context && !buffer.locked;
 }
 
 class Float {

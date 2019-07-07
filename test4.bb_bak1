@@ -1,9 +1,13 @@
-;HandleImage Example
+; CommandLine$() Example
+; Be sure to use PROGRAM->PROGRAM COMMAND LINE from the
+; pull down and put /debug in there to test with.
 
-Graphics 800,600,16
-Origin 100, 100
-gfxPlayer=LoadImage("media/chest.png")
+a$=CommandLine$()
 
-;HandleImage gfxPlayer,20,20
-DrawImage gfxPlayer,0,0
-WaitKey
+If a$="/debug" Then 
+Print "Debug mode is on!"
+debug=1
+Else
+Print "No debugging activated."
+debug=0
+End If 

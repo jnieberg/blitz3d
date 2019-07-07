@@ -1,6 +1,7 @@
 var _graphicsBufferList = [];
 var _graphicsBuffer = {};
 var _graphicsDepth;
+var _graphicsMidHandle = false;
 var _graphicsModeList = [
 	{},
 	{
@@ -123,10 +124,17 @@ function _graphicsCreate(width, height, id = '') {
 	}
 	buffer.id = id;
 	buffer.locked = false;
-	buffer.x = 0;
-	buffer.y = 0;
 	buffer.canvas.width = width;
 	buffer.canvas.height = height;
+	buffer.x = _graphicsMidHandle ? Math.floor(width / 2) : 0;
+	buffer.y = _graphicsMidHandle ? Math.floor(height / 2) : 0;
+	buffer.scaleX = 1.0;
+	buffer.scaleY = 1.0;
+	buffer.rotate = 0;
+	buffer.transform11 = 1.0;
+	buffer.transform21 = 0.0;
+	buffer.transform12 = 0.0;
+	buffer.transform22 = 1.0;
 	buffer.context = buffer.canvas.getContext('2d');
 	buffer.context.textBaseline = 'top';
 	buffer.context.textAlign = 'left';

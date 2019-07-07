@@ -12,6 +12,13 @@ body #blitz {
   bottom: calc(10% + 20px);
   left: 0;
   right: 0;
+  image-rendering: -o-pixelated;
+  image-rendering: pixelated;
+  image-rendering: optimizeSpeed;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: optimize-contrast;
+  -ms-interpolation-mode: nearest-neighbor;
 }
 
 body #blitzText {

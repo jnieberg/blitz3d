@@ -5,7 +5,7 @@ function _waitKeyGetCode(event) {
 }
 _addListener('keypress', _waitKeyGetCode, 'waitkey');
 
-function _waitkey(char) {
+function _waitkey(char = false) {
 
 	function done(key) {
 		const result = key ? _waitKeyEvent.key : _waitKeyEvent.key.length === 1 ? _asc(_waitKeyEvent.key) : _waitKeyEvent.keyCode;

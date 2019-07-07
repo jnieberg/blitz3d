@@ -36,12 +36,12 @@ window.onload = () => {
 
 window.onerror = (err, url, line) => {
 	_debuglog(`[SYSTEM] - ${err} (line ${line})`, '#f57');
-}
+};
 
 document.addEventListener('pointerlockchange', (event) => {
 	if (document.pointerLockElement === _eventCanvas) {
-		_mouseElement.classList.add('show');
+		//_mouseElement.classList.add('show');
 	} else {
-		_mouseElement.classList.remove('show');
+		//_mouseElement.classList.remove('show');
 	}
 });

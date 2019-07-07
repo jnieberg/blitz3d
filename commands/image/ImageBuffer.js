@@ -1,3 +1,6 @@
 function _imagebuffer(image, frame = 0) {
-	return image[frame];
+	if (image && image[frame]) {
+		return image[frame];
+	}
+	return null;
 }

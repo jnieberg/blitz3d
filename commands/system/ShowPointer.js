@@ -1,4 +1,4 @@
 function _showpointer() {
-	const canvas = _frontbuffer().canvas;
-	canvas.removeAttribute('style');
+	const pointer = document.querySelector('#blitzPointer');
+	pointer.classList.add('show');
 }

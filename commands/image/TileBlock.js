@@ -1,7 +1,12 @@
 function _tileblock(image, x = 0, y = 0, frame = 0, buffer = _graphicsBuffer) {
-	if (buffer.context && !buffer.locked) {
+	if (image && image[frame] && image[frame].context && buffer.context && !buffer.locked) {
+		const pattern = buffer.context.createPattern(image[frame].canvas, 'repeat');
 		buffer.context.fillStyle = 'rgb(0, 0, 0)';
-		buffer.context.fillRect(x + _originX, y + _originY, image[frame].canvas.width, image[frame].canvas.height);
-		buffer.context.drawImage(image[frame].canvas, x + _originX, y + _originY);
+		buffer.context.fillRect(0, 0, buffer.canvas.width, buffer.canvas.height);
+		buffer.context.translate(x + _originX - image[frame].x, y + _originY - image[frame].y);
+		buffer.context.rect(-x, -y, buffer.canvas.width, buffer.canvas.height);
+		buffer.context.fillStyle = pattern;
+		buffer.context.fill();
+		buffer.context.translate(-(x + _originX - image[frame].x), -(y + _originY - image[frame].y));
 	}
 }
