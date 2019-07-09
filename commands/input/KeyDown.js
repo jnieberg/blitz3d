@@ -11,9 +11,10 @@ _addListener('keydown', _keyDownGetKeyDown, 'keydown');
 _addListener('keyup', _keyDownRemoveKeyDown, 'keydown');
 
 function _keydown(code) {
-	return new Promise((resolve, reject) => {
-		setTimeout(() => {
-			resolve(_keyDownList[code]);
-		});
-	});
+	//return new Promise((resolve, reject) => {
+	// setTimeout(() => {
+	// 	resolve(_keyDownList[code]);
+	// });
+	//});
+	return _keyDownList[code];
 }

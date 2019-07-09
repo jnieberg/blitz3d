@@ -15,9 +15,10 @@ function _mousedown(button) {
 		const mouseIndex = [0, 1, 3, 2];
 		return _mouseDownCheck === mouseIndex[_mouseDownThis.which || _mouseDownThis.button + 1 || 0];
 	}
-	return new Promise((resolve, reject) => {
-		setTimeout(() => {
-			resolve(done());
-		});
-	});
+	// return new Promise((resolve, reject) => {
+	// 	setTimeout(() => {
+	// 		resolve(done());
+	// 	});
+	// });
+	return done();
 }

@@ -116,7 +116,7 @@ function _graphics(width, height, depth, mode) {
 
 function _graphicsCreate(width, height, id = '') {
 	const buffer = {};
-	const font = _loadfont('courier', 13, false, false, false);
+	const font = _loadfont('courier', 18, false, false, false);
 	if (id === '_front') {
 		buffer.canvas = document.querySelector('#blitz');
 	} else {

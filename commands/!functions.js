@@ -81,11 +81,20 @@ function _string2array(str) {
 	return buf;
 }
 
-async function _async() {
+var _asyncTimer = _millisecs();
+function _async(ms = 10) {
 	return new Promise((resolve, reject) => {
-		setTimeout(() => {
+		const timer = _millisecs();
+		// _graphicsBuffer.context.clearRect(0, 0, _stringwidth(_str(timer - _asyncTimer)), 16);
+		// _text(0, 0, timer - _asyncTimer);
+		if (timer - _asyncTimer >= ms) {
+			_asyncTimer = timer;
+			setTimeout(() => {
+				resolve(1);
+			});
+		} else {
 			resolve(1);
-		});
+		}
 	});
 }
 
@@ -152,4 +161,46 @@ class Float {
 	valueOf = () => {
 		return this.value;
 	};
+}
+
+class Dim {
+	_dimensions;
+	_array;
+
+	constructor() {
+		const dimensions = [...arguments];
+		this._dimensions = dimensions;
+		this._array = this._newArray(dimensions);
+	}
+
+	_newArray(dimensions, array = []) {
+		let arr;
+		let rest;
+		if (dimensions.length > 0) {
+			const len = dimensions[0];
+			rest = dimensions.slice(1);
+			arr = [];
+			for (let d = 0; d < len; d++) {
+				arr[d] = this._newArray(rest, array);
+			}
+		} else {
+			arr = 0;
+		}
+		return arr;
+	}
+
+	_getArray(array, indices) {
+		var returnValue;
+		if (indices.length === 0) {
+			returnValue = array;
+		} else {
+			returnValue = this._getArray(array[indices[0]], indices.slice(1));
+		}
+		return returnValue;
+	}
+
+	_get() {
+		const position = [...arguments];
+		return this._getArray(this._array, position);
+	}
 }
