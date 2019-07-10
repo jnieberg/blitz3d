@@ -1,5 +1,9 @@
+var _flipSync = false;
 function _flip() {
-	const back = _backbuffer();
-	const front = _frontbuffer();
-	front.context.drawImage(back.canvas, 0, 0);
+	if (_flipSync) {
+		_flipSync = false;
+		const back = _backbuffer();
+		const front = _frontbuffer();
+		front.context.drawImage(back.canvas, 0, 0);
+	}
 }

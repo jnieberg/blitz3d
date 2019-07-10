@@ -1,9 +1,9 @@
 const fs = require('fs');
 const url = require('url');
 const mm = require('music-metadata');
-const util = require('util');
-const baseDirectory = process.cwd();
-const workingDirectory = baseDirectory.replace(/\\/g, '/');
+const path = require('path');
+const baseDirectory = path.dirname(require.main.filename);
+const sharedDirectory = path.normalize(baseDirectory + '\\shared');
 const blitz = require('../blitz');
 const status = {
 	ok: 200,
@@ -11,9 +11,26 @@ const status = {
 	forbidden: 403,
 	notFound: 404
 };
+var mimetype = {
+	'.html': 'text/html',
+	'.js': 'text/javascript',
+	'.css': 'text/css',
+	'.txt': 'text/plain',
+	'.jpg': 'image/jpeg',
+	'.gif': 'image/gif',
+	'.bmp': 'image/bmp',
+	'.png': 'image/png',
+	'.svg': 'image/svg+xml',
+	'.ico': 'image/x-icon',
+	'.ttf': 'application/x-font-ttf',
+	'.woff': 'application/x-font-woff',
+	'.woff2': 'text/plain',
+	'.ogv': 'application/ogg',
+	'.wav': 'audio/mpeg'
+};
 
-function parseRequestEnd(requestUrl, res, mime, sampleRate = null, stat = status.ok) {
-	const fileStream = fs.createReadStream(`${baseDirectory}${requestUrl.pathname}`);
+function parseRequestEnd(requestUrl, res, mime, directory = baseDirectory, sampleRate = null, stat = status.ok) {
+	const fileStream = fs.createReadStream(`${directory}${requestUrl.pathname}`);
 	((fStream, resp) => {
 		res.writeHead(stat, {
 			'Accept-Ranges': 'bytes',
@@ -44,21 +61,24 @@ function parseRequestEnd(requestUrl, res, mime, sampleRate = null, stat = status
 }
 
 module.exports = {
-	parseRequest: (req, res, mime) => {
+	parseRequest: (req, res, isBaseDirectory = true) => {
+		const directory = isBaseDirectory ? baseDirectory : sharedDirectory;
 		const requestUrl = url.parse(req.url);
+		const ext = requestUrl.pathname.replace(/^.*(?=\.)/, '');
+		const mime = mimetype[ext] || 'text/html';
 		if (mime === 'audio/mpeg') {
-			mm.parseFile(`${baseDirectory}${requestUrl.pathname}`)
+			mm.parseFile(`${directory}${requestUrl.pathname}`)
 				.then(metadata => {
-					parseRequestEnd(requestUrl, res, mime, metadata.format.sampleRate);
+					parseRequestEnd(requestUrl, res, mime, directory, metadata.format.sampleRate);
 				}).catch(() => {
-					parseRequestEnd(requestUrl, res, mime, null, status.notFound);
+					parseRequestEnd(requestUrl, res, mime, directory, null, status.notFound);
 				});
 		} else {
-			parseRequestEnd(requestUrl, res, mime);
+			parseRequestEnd(requestUrl, res, mime, directory);
 		}
 	},
 	parseRequestBB: (req, res) => {
-		const requestUrl = url.parse(req.url);
+		const requestUrl = url.parse(`/shared${req.url}`);
 		res.writeHead(status.ok, {
 			'Content-Type': 'application/javascript'
 		});
@@ -73,13 +93,13 @@ module.exports = {
 				resp.end(`(async () => {
 try {
 _endgraphics();
-await _changedir('${workingDirectory}');
+await _changedir('/');
 ${result}
 } catch(err) {
-if(err && err.message) console.error(err);
-}
-${blitz.endProgram()}
-})();`);
+if(err && err.message) _debugerror(err, true);
+			}
+${ blitz.endProgram()}
+})(); `);
 			});
 			fStream.on('error', (err) => {
 				resp.end();

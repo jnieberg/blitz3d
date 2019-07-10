@@ -1,7 +1,10 @@
 async function _changedir(directory) {
-	_currentDirCached += '/' + directory;
-	if (directory.indexOf(':') === 1 || directory.indexOf('/') === 0 || directory.indexOf('\\') === 0) {
-		_currentDirCached = directory;
+	let newPath = _currentDirCached + '/' + directory;
+	if (directory.indexOf('/') === 0 || directory.indexOf('\\') === 0) {
+		newPath = directory;
 	}
-	await _postCommand('changedir', { directory: directory });
+	const result = await _postCommand('changedir', { directory: newPath });
+	if (result !== 0) {
+		_currentDirCached = result;
+	}
 }

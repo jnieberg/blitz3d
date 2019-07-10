@@ -1,4 +1,4 @@
-function _oval(x, y, w, h, solid) {
+function _oval(x, y, w, h, solid = true) {
 	if (_bufferEditable()) {
 		_graphicsBuffer.context.fillStyle = _colorRGB();
 		_graphicsBuffer.context.strokeStyle = _colorRGB();

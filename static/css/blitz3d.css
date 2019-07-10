@@ -1,0 +1,92 @@
+body {
+  margin: 0;
+  background-color: #468;
+  overflow: hidden;
+}
+
+body #blitz {
+  background: black;
+  margin: auto;
+  position: absolute;
+  top: 0;
+  bottom: calc(10% + 20px);
+  left: 0;
+  right: 0;
+  image-rendering: -o-pixelated;
+  image-rendering: pixelated;
+  image-rendering: optimizeSpeed;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: optimize-contrast;
+  -ms-interpolation-mode: nearest-neighbor;
+}
+
+body #blitzText {
+  font-family: 'Inconsolata', 'Monaco', 'Consolas', 'Andale Mono', 'Bitstream Vera Sans Mono', 'Courier New', Courier, monospace;
+  font-size: 13px;
+  position: absolute;
+  width: 30%;
+  height: 100%;
+  padding: 10px;
+  right: 0;
+  top: 0;
+  border: 0;
+}
+
+body #blitzText + #blitz {
+  right: calc(30% + 20px);
+}
+
+body #blitzText + #blitz + .debug {
+  right: calc(30% + 20px);
+}
+
+body #blitzPointer {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  margin-left: -5px;
+  margin-top: -2px;
+  display: none;
+}
+
+body #blitzPointer.show {
+  display: block;
+}
+
+body .debug {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #357;
+  white-space: pre;
+  word-wrap: break-word;
+  overflow: auto;
+  padding: 10px 15px;
+  margin: 0;
+  overflow-x: auto;
+  height: 10%;
+}
+
+body .debug code {
+  font-family: 'Inconsolata', 'Monaco', 'Consolas', 'Andale Mono', 'Bitstream Vera Sans Mono', 'Courier New', Courier, monospace;
+  display: block;
+  font-size: 13px;
+  line-height: 20px;
+  color: #ddd;
+  overflow: hidden;
+  min-height: 100%;
+}
+
+body .debug code span {
+  position: relative;
+  top: 0;
+  -webkit-transition: top 0.5s ease-in-out;
+  transition: top 0.5s ease-in-out;
+}
+
+body .debug code span:empty {
+  top: 100px;
+}
+/*# sourceMappingURL=blitz3d.css.map */

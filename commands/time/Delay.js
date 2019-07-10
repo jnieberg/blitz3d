@@ -1,12 +1,10 @@
-var _delayTimeout = undefined;
-
+var _delayTimer = undefined;
 async function _delay(ms) {
-	// clearTimeout(_delayTimeout);
-	// return new Promise(resolve => _delayTimeout = setTimeout(resolve, ms));
-	_delayTimeout = _millisecs();
-	while (await _async(ms)) {
-		const timer = _millisecs();
-		if (timer - _delayTimeout >= ms) {
+	let timer = _millisecs();
+	_delayTimer = timer;
+	while (await _async()) {
+		timer = _millisecs();
+		if (timer - _delayTimer >= ms) {
 			break;
 		}
 	}

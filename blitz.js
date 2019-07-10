@@ -10,7 +10,7 @@ var variableReserved = ['abstract', 'await', 'instanceof', 'super', 'boolean', '
 var variableDouble = ['if', 'while', 'for', 'else', 'case', 'default', 'break', 'const', 'new', 'delete', 'true', 'false', 'function', 'return', 'do', 'of', 'async', 'resolve'];
 var commands = [];
 var commandsFiles = [];
-const baseDirectory = process.cwd();
+const baseDirectory = path.dirname(require.main.filename);
 
 function traverseDir(dir, files) {
 	files = [];
@@ -44,8 +44,8 @@ function printCommands() {
 }
 
 function printTools() {
-	const tools = fs.readdirSync(baseDirectory + '/tools/');
-	return tools.map((filename) => fs.readFileSync(baseDirectory + '/tools/' + filename)).join('\n');
+	const tools = fs.readdirSync(baseDirectory + '/static/js/');
+	return tools.map((filename) => fs.readFileSync(baseDirectory + '/static/js/' + filename)).join('\n');
 }
 
 function initialize() {
@@ -172,9 +172,7 @@ function parsePart(part) {
 	result = result.replace(/^for *(.*?) *= *(.*?) *to *(.*?) step *(.*?);/gim, 'for(var $1=$2,_len_$1=$3; $1<=_len_$1; $1=$1+$4) {');
 	result = result.replace(/^for *(.*?) *= *(.*?) *to *(.*?);/gim, 'for(var $1=$2,_len_$1=$3; $1<=_len_$1; $1+=1) {');
 	result = result.replace(/^for *(.*?)\.(.*?) *= *_each(.*?);/gim, 'for($1 of _each($3)) {');
-	result = result.replace(/(if|\bwhile)\b\((.*?)\) {/gim, (state, m1, m2) => {
-		return `${m1}(${m2.replace(/([^<>\n])=([^<>\n])/g, '$1==$2')}) {`;
-	});
+
 	result = result.replace(/<>/gim, '!=');
 	result = result.replace(/^while *(.*?);/gim, 'while(await _async() && $1) {');
 	result = result.replace(/^goto\((.*?)\);([\w\W]*?)\.\1;/gm, '$1: {\nbreak $1;\n$2}');
@@ -184,7 +182,7 @@ function parsePart(part) {
 	const dimSetRx = [];
 	result = result.replace(/^dim ([a-zA-Z0-9]+?)[$#%]? *\((.+?)\);/gim, (state, m1, m2) => {
 		dimGetRx.push(new RegExp(`(\\b${m1}\\b) *\\(`, 'gm'));
-		dimSetRx.push(new RegExp(`^(\\b${m1}\\b) *\\((.*)\\)(?==)`, 'gm'));
+		dimSetRx.push(new RegExp(`^(\\b${m1}\\b) *\\((.*)\\) *(?==)`, 'gm'));
 		return `var ${m1}=new Dim(${m2});`;
 	});
 	for (const dimRx of dimSetRx) {
@@ -237,6 +235,9 @@ function parsePart(part) {
 			result = result.replace(commandRx, commandsMap[c]);
 		}
 	}
+	result = result.replace(/\b(if|while)\b\((.*?)\)( *[{;])/gim, (state, m1, m2, m3) => {
+		return `${m1}(${m2.replace(/([^<>\n])=([^<>\n])/g, '$1==$2')})${m3}`;
+	});
 	result = result.replace(/^switch([\w\W]*?)break;/gim, 'switch$1');
 	result = result.replace(/\bcase\b *(.+?):/gim, (res, a1) => {
 		return `case ${a1.replace(/(.*?), */gi, '$1:\ncase ')}:`;

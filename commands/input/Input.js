@@ -7,17 +7,17 @@ async function _input(input) {
 	function blink() {
 		_rect(_printX + _graphicsBuffer.context.measureText(input + _inputText).width + 1, _printY, _setFontCurrent.height * .5, _setFontCurrent.height, true);
 		setTimeout(() => {
-			const col = _colorRGB();
+			const col = [_getColorRed, _getColorGreen, _getColorBlue];
 			_color(0, 0, 0);
 			_rect(_printX + _graphicsBuffer.context.measureText(input + _inputText).width, _printY - 1, _setFontCurrent.height * .5 + 2, _setFontCurrent.height + 2, true);
-			_colorRGB() = col;
-		}, 500);
+			_color(col[0], col[1], col[2]);
+		}, 300);
 	}
 	blink();
 	clearInterval(_inputTextCursorInterval);
 	_inputTextCursorInterval = setInterval(() => {
 		blink();
-	}, 1000);
+	}, 600);
 	while (true) {
 		const key = await _waitkey(true);
 		if (key === 'Backspace' || key === 'Delete') {

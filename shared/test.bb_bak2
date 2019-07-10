@@ -1,0 +1,78 @@
+AppTitle "Color Fun --- Wishbone 2001"
+Global gfxX = 640, gfxY = 480
+Graphics gfxX, gfxY, 16, 2
+SetBuffer FrontBuffer()
+SeedRnd(MilliSecs())
+
+Type point
+	Field x
+	Field y
+	Field r
+	Field g
+	Field b
+End Type
+
+pMax = Input("Number of points: ")
+rsc = Input("1. Random colors or 2. Set colors: ")
+rtp = Input("1. Random plot or 2. Trace: ")
+
+
+init(pMax, rsc)
+drawField(rtp)
+WaitKey()
+End
+
+Function drawField(rtp)
+	Cls
+	For p.point = Each point
+		Color 255, 255, 255
+		Oval p\x - 2, p\y - 2, 4, 4
+	Next
+	rgb = 0
+	LockBuffer FrontBuffer()
+	For y1 = 0 To gfxY - 1
+		For x1 = 0 To gfxX - 1
+			If rtp = 2 Then
+				x = x1: y = y1
+				rgb = ReadPixelFast(x, y, FrontBuffer()) And $FFFFFF
+
+Text 0,0, rgb
+			Else
+				Repeat
+					If KeyDown(1) Then UnlockBuffer FrontBuffer(): Return
+					x = Rnd(gfxX): y = Rnd(gfxY)
+					rgb = ReadPixelFast(x, y, FrontBuffer()) And $FFFFFF
+				Until rgb = 0
+			EndIf
+			lengthBest# = gfxX+gfxY
+			If rgb = 0
+				For p.point = Each point
+					If Sqr((p\x-x)^2 + (p\y-y)^2) < lengthBest Then
+						lengthBest = Sqr((p\x-x)^2 + (p\y-y)^2)
+						r1 = p\r: g1 = p\g: b1 = p\b
+					EndIf
+				Next
+				WritePixelFast x, y, r1*$10000+g1*$100+b1, FrontBuffer()
+			EndIf
+		Next
+		If KeyDown(1) Then UnlockBuffer FrontBuffer(): Return
+	Next
+	UnlockBuffer FrontBuffer()
+End Function
+
+Function init(pMax#, rsc#)
+	For i = 1 To pMax
+		p.point = New point
+		p\x = Rnd(0, gfxX-1)
+		p\y = Rnd(0, gfxY-1)
+		If rsc = 2
+			p\r = 255
+			p\g = 254/pMax*i
+			p\b = 0
+		Else
+			p\r = Rnd(254) + 1
+			p\g = Rnd(254) + 1
+			p\b = Rnd(254) + 1
+		EndIf
+	Next 
+End Function

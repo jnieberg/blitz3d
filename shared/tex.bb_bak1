@@ -1,0 +1,5 @@
+a = 0
+b = 1
+If a = 0 Print "hoi": Print "Piep"
+If b = 0 Print "doei" Else Print "bla"
+If Not c Print "haha"

@@ -82,20 +82,19 @@ function _string2array(str) {
 }
 
 var _asyncTimer = _millisecs();
-function _async(ms = 10) {
-	return new Promise((resolve, reject) => {
-		const timer = _millisecs();
-		// _graphicsBuffer.context.clearRect(0, 0, _stringwidth(_str(timer - _asyncTimer)), 16);
-		// _text(0, 0, timer - _asyncTimer);
-		if (timer - _asyncTimer >= ms) {
+function _async() {
+	const timer = _millisecs();
+	if (timer - _asyncTimer >= 1000 / 60) {
+		return new Promise((resolve, reject) => {
 			_asyncTimer = timer;
+			_flipSync = true;
 			setTimeout(() => {
 				resolve(1);
 			});
-		} else {
-			resolve(1);
-		}
-	});
+		});
+	} else {
+		return 1;
+	}
 }
 
 function _getCommand(command, arguments) {
@@ -105,7 +104,7 @@ function _getCommand(command, arguments) {
 		if (typeof arguments === 'object') {
 			query = '?' + JSON.stringify(query);
 		}
-		http.open('GET', `_${command}${query}`, true);
+		http.open('GET', `/_${command}${query}`, true);
 		http.onreadystatechange = () => {
 			if (http.readyState === 4) {
 				let data = http.responseText;
@@ -125,7 +124,7 @@ function _getCommand(command, arguments) {
 function _postCommand(command, arguments = {}) {
 	return new Promise((resolve, reject) => {
 		var http = new XMLHttpRequest();
-		http.open('POST', `_${command}`, true);
+		http.open('POST', `/_${command}`, true);
 		http.onreadystatechange = () => {
 			if (http.readyState === 4) {
 				let data = http.responseText;
@@ -144,6 +143,15 @@ function _postCommand(command, arguments = {}) {
 
 function _bufferEditable(buffer = _graphicsBuffer) {
 	return buffer && buffer.context && !buffer.locked;
+}
+
+function _dimGetIndex(dimensions, position) {
+	let len = 1;
+	return position.reduce((total, num, index) => {
+		const result = total + len * num;
+		len = len * (dimensions[index] + 1);
+		return result;
+	}, 0);
 }
 
 class Float {
@@ -180,7 +188,7 @@ class Dim {
 			const len = dimensions[0];
 			rest = dimensions.slice(1);
 			arr = [];
-			for (let d = 0; d < len; d++) {
+			for (let d = 0; d <= len; d++) {
 				arr[d] = this._newArray(rest, array);
 			}
 		} else {

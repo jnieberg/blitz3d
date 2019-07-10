@@ -3,21 +3,14 @@ var _waitKeyEvent = undefined;
 function _waitKeyGetCode(event) {
 	_waitKeyEvent = event;
 }
-_addListener('keypress', _waitKeyGetCode, 'waitkey');
+_addListener('keydown', _waitKeyGetCode, 'waitkey');
 
 function _waitkey(char = false) {
-
 	function done(key) {
 		const result = key ? _waitKeyEvent.key : _waitKeyEvent.key.length === 1 ? _asc(_waitKeyEvent.key) : _waitKeyEvent.keyCode;
 		_waitKeyEvent = undefined;
 		return result;
 	}
-	function doneKey() {
-		const result = _waitKeyEvent.key;
-		_waitKeyEvent = undefined;
-		return result;
-	}
-
 	return new Promise((resolve) => {
 		_waitKeyInterval = setInterval(() => {
 			if (_waitKeyEvent) {

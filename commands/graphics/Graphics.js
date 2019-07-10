@@ -114,7 +114,7 @@ function _graphics(width, height, depth, mode) {
 	_moveMouseY = height / 2;
 }
 
-function _graphicsCreate(width, height, id = '') {
+function _graphicsCreate(width, height, id) {
 	const buffer = {};
 	const font = _loadfont('courier', 18, false, false, false);
 	if (id === '_front') {

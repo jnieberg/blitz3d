@@ -39,9 +39,9 @@ function writeHtml(req, body) {
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<script src="tools/howler.core.js"></script>
-	<script src="tools/howler.spatial.js"></script>
-	<link rel="stylesheet" type="text/css" href="css/blitz3d.css">
+	<script src="/static/js/howler.core.js"></script>
+	<script src="/static/js/howler.spatial.js"></script>
+	<link rel="stylesheet" type="text/css" href="/static/css/blitz3d.css">
 	<title>Blitz3D - ${requestUrl.pathname.replace(/^\//, '')}</title>
 </head>
 
@@ -77,50 +77,32 @@ const server = app
 		const requestUrl = url.parse(req.url);
 		res.end(writeHtml(req, `<canvas id="blitz" width="400" height="300"></canvas>
 	<pre class="debug"><code></code></pre>
-	<img src="images/mouse.png" id="blitzPointer" width="24" height="24" class="show">
-	<script src="blitz3d.js"></script>
+	<img src="/static/images/mouse.png" id="blitzPointer" width="24" height="24">
+	<script src="/blitz3d.js"></script>
 	<script src="${requestUrl.pathname}.js"></script>`));
 	})
 	.get('/blitz3d.js', (req, res) => {
 		res.end(blitz.parseBlitz());
 	})
-	.get('/tools/*.js', (req, res) => {
-		parseRequest(req, res, 'text/javascript');
-	})
-	.get('*.js', (req, res) => {
+	.get('*.bb.js', (req, res) => {
 		parseRequestBB(req, res);
 		res.setTimeout(timeoutTimer, () => {
 			res.status(status.notFound).end();
 		});
 	})
-	.get('*.css', (req, res) => {
-		parseRequest(req, res, 'text/css');
+	.get('/static(/css/*.css|/images/*.png|/js/*.js)', (req, res) => {
+		parseRequest(req, res);
 	})
-	.get('*.jpg', (req, res) => {
-		parseRequest(req, res, 'image/jpeg');
-	})
-	.get('*.gif', (req, res) => {
-		parseRequest(req, res, 'image/gif');
-	})
-	.get('*.png', (req, res) => {
-		parseRequest(req, res, 'image/png');
-	})
-	.get('*.bmp', (req, res) => {
-		parseRequest(req, res, 'image/bmp');
-	})
-	.get('*.ogv', (req, res) => {
-		parseRequest(req, res, 'application/ogg');
-	})
-	.get('*.wav', (req, res) => {
-		parseRequest(req, res, 'audio/mpeg');
+	.get('*.(css|jpg|gif|png|bmp|ogv|wav)', (req, res) => {
+		parseRequest(req, res, false);
 	})
 	.get('/', (req, res) => {
 		res.end(writeHtml(req, `<textarea id="blitzText">; Your custom code</textarea>
 <canvas id="blitz" width="400" height="300"></canvas>
 <pre class="debug"><code></code></pre>
-<script src="blitz3d.js"></script>
+<script src="/blitz3d.js"></script>
 <div id="blitzScript"></div>
-<img src="images/mouse.png" id="blitzPointer" width="24" height="24" class="show">
+<img src="/static/images/mouse.png" id="blitzPointer" width="24" height="24">
 <script>
 var _eventText = document.querySelector('#blitzText');
 var _blitzCode = localStorage.getItem('blitz3d-source');
@@ -142,10 +124,10 @@ function _eventTextExecute(callback = () => {}) {
 			script.innerHTML += '(async function Main() {\\n';
 			script.innerHTML += 'try {\\n';
 			script.innerHTML += '_endgraphics();\\n';
-			script.innerHTML += 'await _changedir(\\'${workingDirectory}\\');\\n';
+			script.innerHTML += 'await _changedir(\\'/\\');\\n';
 			script.innerHTML += xhr.response + '\\n';
 			script.innerHTML += '} catch(err) {\\n';
-			script.innerHTML += 'if(err && err.message) console.error(err);\\n';
+			script.innerHTML += 'if(err && err.message) _debugerror(err, true);\\n';
 			script.innerHTML += '}\\n';
 			script.innerHTML += '${blitz.endProgram().replace(/'/g, '\\\'')}\\n';
 			script.innerHTML += '})();';

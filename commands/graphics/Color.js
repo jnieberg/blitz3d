@@ -1,9 +1,7 @@
 function _color(r, g, b) {
-	if (_graphicsBuffer.context) {
-		_getColorRed = r;
-		_getColorGreen = g;
-		_getColorBlue = b;
-	}
+	_getColorRed = r;
+	_getColorGreen = g;
+	_getColorBlue = b;
 }
 
 function _colorRGB() {
