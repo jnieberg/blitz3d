@@ -1,5 +1,5 @@
 function _rect(x, y, w, h, solid = true) {
-	if (_graphicsBuffer.context) {
+	if (_graphicsBuffer.context && w > 0 && h > 0) {
 		if (solid) {
 			_graphicsBuffer.context.fillStyle = _colorRGB();
 			_graphicsBuffer.context.fillRect(x + _originX, y + _originY, w, h);

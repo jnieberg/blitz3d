@@ -1,12 +1,13 @@
 var _inputText = '';
 var _inputTextCursorInterval = undefined;
+var _inputTextCursorTimeout = undefined;
 async function _input(input) {
 	_inputText = ''
 	_saveScreen();
 	_print(`${input}`, true);
 	function blink() {
 		_rect(_printX + _graphicsBuffer.context.measureText(input + _inputText).width + 1, _printY, _setFontCurrent.height * .5, _setFontCurrent.height, true);
-		setTimeout(() => {
+		_inputTextCursorTimeout = setTimeout(() => {
 			const col = [_getColorRed, _getColorGreen, _getColorBlue];
 			_color(0, 0, 0);
 			_rect(_printX + _graphicsBuffer.context.measureText(input + _inputText).width, _printY - 1, _setFontCurrent.height * .5 + 2, _setFontCurrent.height + 2, true);
@@ -25,6 +26,7 @@ async function _input(input) {
 		} else if (key === 'Enter') {
 			return new Promise((resolve, reject) => {
 				clearInterval(_inputTextCursorInterval);
+				clearInterval(_inputTextCursorTimeout);
 				_loadScreen();
 				_print(`${input}${_inputText}`, true);
 				resolve(_inputText);

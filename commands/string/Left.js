@@ -1,3 +1,3 @@
 function _left(string, length) {
-	return string.slice(length);
+	return (string || '').substring(0, length);
 }

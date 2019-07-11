@@ -79,6 +79,7 @@ module.exports = {
 	},
 	parseRequestBB: (req, res) => {
 		const requestUrl = url.parse(`/shared${req.url}`);
+		const directory = requestUrl.pathname.replace(/^\/shared(\/.*)\/.*?$/, '$1');
 		res.writeHead(status.ok, {
 			'Content-Type': 'application/javascript'
 		});
@@ -89,14 +90,15 @@ module.exports = {
 				body = body + data;
 			});
 			fStream.on('end', () => {
-				const result = blitz.parseBB(body);
+				process.chdir(path.dirname(require.main.filename));
+				const result = blitz.parseBB(body, directory);
 				resp.end(`(async () => {
 try {
 _endgraphics();
 await _changedir('/');
 ${result}
 } catch(err) {
-if(err && err.message) _debugerror(err, true);
+if(err && err.message) _errorlog(err, true);
 			}
 ${ blitz.endProgram()}
 })(); `);

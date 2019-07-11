@@ -37,7 +37,7 @@ window.onload = () => {
 };
 
 window.onerror = (err, url, line) => {
-	_debugerror(err, true);
+	_errorlog(err, true);
 };
 
 document.addEventListener('pointerlockchange', (event) => {

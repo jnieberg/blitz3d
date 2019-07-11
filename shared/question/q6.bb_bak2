@@ -1,0 +1,34 @@
+Include "head.bb"
+Cls: DrawBlock back, 0, 0
+Color 255, 255, 128
+printBlock(400, 250, "That's the Question\\Ronde 6", 400, 9, 0, 30)
+Flip
+While (Not KeyHit(57)) And (Not KeyHit(28))
+	If KeyHit(1) Then End
+Wend
+a1$ = ".............."
+b1$ = "NEGENENVEERTIG"
+c1$ = "....... ....... ...... ... .. ... ... ... ....?"
+d1$ = "Hoeveel nazaten hebben oma en opa van der Haar?"
+For j = 0 To 15
+	Select j
+		Case 0: a$ = "HET LEGER":			b$ = "R":	d$ = "Van welke beroepsgroep komen de woorden balen en baaldag?"
+		Case 1: a$ = "HABBEKRATS":			b$ = "D":	d$ = "Hoe noem je in het Jiddisch een kleinigheid?"
+		Case 2: a$ = "SATURNUS":			b$ = "L":	d$ = "Rond welke planeet cirkelt de maan Titan?"
+		Case 3: a$ = "GO AHEAD EAGLES":		b$ = "T":	d$ = "Welke voetbalclub heeft een adelaar als logo?"
+		Case 4: a$ = "HOND":				b$ = "S":	d$ = "Wat was het eerste dier in de ruimte?"
+		Case 5: a$ = "BOBBAAN":				b$ = "F":	d$ = "Bij welke attractie scheur je in de Efteling met 60 km door de bocht?"
+		Case 6: a$ = "SAINT TROPEZ":		b$ = "G":	d$ = "In welke stad in Zuid-Frankrijk ligt villa Felderhof?"
+		Case 7: a$ = "YELLOWSTONE":			b$ = "P":	d$ = "Welk nationaal park in Amerika is het oudste van de wereld?"
+		Case 8: a$ = "PLASTISCHE CHIRURCHIE":b$ = "N":	d$ = "Onder welke medische naam valt ooglidcorrectie?"
+		Case 9: a$ = "DRIVE":				b$ = "W":	d$ = "Hoe noem je de afslag bij een Tee bij golf?"
+		Case 10:a$ = "TREVI FONTEIN":		b$ = "I":	d$ = "Hoe heet de grootste fontein in Rome?"
+		Case 11:a$ = "CANARD":				b$ = "O":	d$ = "Wat is het Franse woord voor een eend?"
+		Case 12:a$ = "DOWN UNDER":			b$ = "M":	d$ = "Wat is de bijnaam van Australië?"
+		Case 13:a$ = "DE PIJP":				b$ = "A":	d$ = "In welke wijk is André Hazes in Amsterdam geboren?"
+		Case 14:a$ = "ROZE BRIL":			b$ = "H":	d$ = "Welke bril zorgt voor een zonnige kijk op het leven?"
+		Case 15:a$ = "GOUVERNANTE":			b$ = "E":	d$ = "Wat is een ander woord voor 'nanny'?"
+	End Select
+	Include "main.bb"
+Next
+Include "foot.bb"

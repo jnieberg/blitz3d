@@ -7,8 +7,6 @@ const blitz = require('./blitz');
 const { postRequest } = require('./requests/postRequest');
 const { getRequest } = require('./requests/getRequest');
 const { parseRequest, parseRequestBB } = require('./requests/parseRequest');
-const baseDirectory = process.cwd();
-const workingDirectory = baseDirectory.replace(/\\/g, '/');
 const portDefault = 3000;
 const port = process.env.PORT || portDefault;
 const timeoutTimer = 10000;
@@ -26,7 +24,7 @@ var color = {
 	fgBlue: '\x1b[34m\x1b[1m',
 	fgMagenta: '\x1b[35m\x1b[1m',
 	fgCyan: '\x1b[36m\x1b[1m',
-	fgWhite: '\x1b[37m\x1b[1m',
+	fgWhite: '\x1b[37m\x1b[1m'
 };
 var app = express();
 
@@ -60,7 +58,7 @@ const server = app
 			body = body + data;
 		});
 		req.on('end', () => {
-			const result = blitz.parseBB(body);
+			const result = blitz.parseBB(body, '/');
 			res.end(result);
 		});
 		req.on('error', (err) => {
@@ -127,7 +125,7 @@ function _eventTextExecute(callback = () => {}) {
 			script.innerHTML += 'await _changedir(\\'/\\');\\n';
 			script.innerHTML += xhr.response + '\\n';
 			script.innerHTML += '} catch(err) {\\n';
-			script.innerHTML += 'if(err && err.message) _debugerror(err, true);\\n';
+			script.innerHTML += 'if(err && err.message) _errorlog(err, true);\\n';
 			script.innerHTML += '}\\n';
 			script.innerHTML += '${blitz.endProgram().replace(/'/g, '\\\'')}\\n';
 			script.innerHTML += '})();';

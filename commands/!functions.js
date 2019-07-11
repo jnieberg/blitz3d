@@ -93,6 +93,7 @@ function _async() {
 			});
 		});
 	} else {
+		_flipSync = false;
 		return 1;
 	}
 }
@@ -152,6 +153,15 @@ function _dimGetIndex(dimensions, position) {
 		len = len * (dimensions[index] + 1);
 		return result;
 	}, 0);
+}
+
+function _declare(variable) {
+	if (typeof variable === 'undefined') {
+		let variable = 0;
+	} else {
+		variable = variable;
+	}
+	return variable;
 }
 
 class Float {

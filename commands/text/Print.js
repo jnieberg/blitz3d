@@ -16,6 +16,7 @@ function _print(txt = 0 || '', fix) {
 		_graphicsBuffer.context.fillText(txt, _printX + _writeX + _originX, _printY + _originY);
 		if (!fix) {
 			_printY = _printY + _setFontCurrent.height;
+			_printX = 0;
 		}
 		_writeX = 0;
 	}

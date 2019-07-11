@@ -3,6 +3,7 @@
 /* eslint-env browser, node */
 var fs = require('fs');
 var path = require('path');
+var beautify = require('js-beautify').js;
 var commandsAsync = ['delay', 'input', 'waitkey', 'waitmouse', 'loopforever', 'readfile', 'closefile', 'writestring', 'openmovie', 'loadsound', 'playsound', 'playmusic', 'channelplaying', 'loadbuffer', 'savebuffer', 'loadimage', 'saveimage', 'loadanimimage'].map((res) => `_${res}`); //'getkey', 'getmouse', 'keyhit', 'keydown', 
 var commandsStatic = ['class', 'in', 'of', 'var', 'case', 'select'];
 var commandsReturn = ['resizebank', 'freebank', 'closedir', 'closetcpstream', 'closetcpserver', 'writeline', 'writestring', 'writebyte', 'writeint', 'writebytes', 'writefloat', 'writeshort', 'closemovie', 'freesound', 'freeimage', 'freetimer'];
@@ -39,7 +40,7 @@ function readCommands() {
 function printCommands() {
 	commands = readCommands();
 	return commandsFiles.map((filename) => {
-		return fs.readFileSync(baseDirectory + '/' + filename)
+		return fs.readFileSync(baseDirectory + '/' + filename);
 	}).join('\n');
 }
 
@@ -104,7 +105,7 @@ function parseCommands(result) {
 	result = result.replace(/\b0([a-zA-Z_][a-zA-Z0-9_$]*?)\b/gim, '$1');
 	let brackWhile = 0;
 	while (brackWhile < 10) {
-		result = result.replace(/\(\((.*?)\)\)/gim, '($1)');
+		result = result.replace(/\(\(([^()\n]*?)\)\)/gim, '($1)');
 		brackWhile += 1;
 	}
 	result = result.replace(/\b_([a-z0-9_$]*?\b) *\( *(\b[^,\r\n]*\b) *(,? *?)(.*) *\);/gim, (res, a1, a2, a3, a4) => {
@@ -127,16 +128,30 @@ function parsePrimitives(result, sign, obj) {
 	return result;
 }
 
-function parsePart(part) {
+function parsePart(part, directory) {
 	let result = part;
 	let quotes = null;
 	let comments = null;
+
+	result = result.replace(/include *"(.*?)"/gim, (res, a1) => {
+		try {
+			return fs.readFileSync(`${process.cwd()}/shared${directory}/${a1}`);
+		} catch (err) {
+			return '';
+		}
+	});
 
 	result = result.replace(/;(.*?)/gm, '//$1');
 	[result, quotes] = backupText(result, 1, /".*?"/gm);
 	[result, comments] = backupText(result, 2, / *\/\/(.*?)$/gm);
 	result = result.replace(/(^[\t ]+|[\t ]+$)/gm, '');
-	result = result.replace(/\bif *(.+?) *then *(.+?) *$/gim, 'if $1 then\n$2\nend if\n');
+
+	let ifWhile = 0;
+	while (ifWhile < 10) {
+		result = result.replace(/\bif *(.+?) *then *(.+?) *$/gim, 'if $1 then\n$2\nend if\n');
+		ifWhile++
+	}
+
 	result = result.replace(/\bif *(.+?) *$/gim, (res, a1) => {
 		if (a1.toLowerCase().indexOf('then') === -1) {
 			const parts = a1.match(/((not) *[^\n ]*?|[^\n ]*? *(,|=|<|>|and|or|xor) *[^\n ]*?|[^\n ])+/gi) || [];
@@ -174,7 +189,7 @@ function parsePart(part) {
 	result = result.replace(/^for *(.*?)\.(.*?) *= *_each(.*?);/gim, 'for($1 of _each($3)) {');
 
 	result = result.replace(/<>/gim, '!=');
-	result = result.replace(/^while *(.*?);/gim, 'while(await _async() && $1) {');
+	result = result.replace(/^while *(.*?);/gim, 'while(await _async() & $1) {');
 	result = result.replace(/^goto\((.*?)\);([\w\W]*?)\.\1;/gm, '$1: {\nbreak $1;\n$2}');
 	result = result.replace(/^\.(.+?);/gm, '$1:');
 
@@ -203,18 +218,19 @@ function parsePart(part) {
 	result = result.replace(/^(wend|next);/gim, '}');
 	result = result.replace(/^end *.*?;/gim, '}');
 	result = result.replace(/%([01]+?\b)/gm, 'parseInt(\'$1\', 2) - 4294967296');
-	result = result.replace(/\$([a-zA-Z0-9$#%]+)/gim, '\'#$1\'');
-	result = result.replace(/\band\b/gim, ' && ');
-	result = result.replace(/\bor\b/gim, ' || ');
+	result = result.replace(/\$([A-F0-9]+)/gim, '0x$1');
+	result = result.replace(/\band\b/gim, ' & ');
+	result = result.replace(/\bor\b/gim, ' | ');
 	result = result.replace(/ *\^ */gim, ' ** ');
 	result = result.replace(/\bxor\b/gim, ' ^ ');
 	result = result.replace(/\bmod\b/gim, ' % ');
 	result = result.replace(/\bshl\b/gim, ' << ');
 	result = result.replace(/\bshr\b/gim, ' >> ');
 	result = result.replace(/\bsar\b/gim, ' >>> ');
-	result = result.replace(/\bfield\b *(.+?);/gim, (res, a1) => {
-		return `field ${a1.replace(/(.*?), */gi, '$1;\nfield ')};`;
+	result = result.replace(/\b(field|global|local)\b *(.+?);/gim, (res, a1, a2) => {
+		return `${a1} ${a2.replace(/(.*?), */gi, '$1;\n' + a1 + ' ')};`;
 	});
+	result = result.replace(/\b(field|global|local)\b *([^=\n]+?);/gim, '$1 $2 = 0;');
 	const commandsMap = {
 		select: 'switch($1) {',
 		case: 'break;\ncase $1:',
@@ -222,10 +238,9 @@ function parsePart(part) {
 		forever: '} while(await _async());',
 		default: 'break;\ndefault:',
 		global: 'var $1;',
-		local: 'let $1;',
+		local: '$1;',
 		type: 'class $1 {',
-		field: '$1 = 0;',
-		until: '} while(await _async() && !($1));',
+		until: '} while(await _async() & !($1));',
 		goto: '',
 		exit: 'break;'
 	};
@@ -236,7 +251,7 @@ function parsePart(part) {
 		}
 	}
 	result = result.replace(/\b(if|while)\b\((.*?)\)( *[{;])/gim, (state, m1, m2, m3) => {
-		return `${m1}(${m2.replace(/([^<>\n])=([^<>\n])/g, '$1==$2')})${m3}`;
+		return `${m1}(${m2.replace(/([^<>\n])([=\|&])([^<>\n])/g, '$1$2$2$3')})${m3}`;
 	});
 	result = result.replace(/^switch([\w\W]*?)break;/gim, 'switch$1');
 	result = result.replace(/\bcase\b *(.+?):/gim, (res, a1) => {
@@ -251,33 +266,38 @@ function parsePart(part) {
 	result = result.replace(/(\b[a-z_][a-zA-Z0-9_$#%]*\b) *(?!\()(.+?);/gm, (com, a1, a2) => {
 		const resultRx = new RegExp(`async *function *${a1} *\\(`, 'i')
 		if (result.search(resultRx) > -1 || commandsAsync.indexOf(a1) > -1) {
-			return `${a1}(${a2});`;
+			return `${a1}.call(window, ${a2});`;
 		}
 		return com;
 	});
 	result = result.replace(/(\b[a-z_][a-zA-Z0-9_$#%]*\b)\(/gm, (com, a1) => {
 		const resultRx = new RegExp(`async *function *${a1} *\\(`, 'i')
 		if (result.search(resultRx) > -1 || commandsAsync.indexOf(a1) > -1) {
-			return `await ${a1}(`;
+			return `await ${a1}.call(window, `;
 		}
 		return com;
 	});
 	let varList = [];
-	result = result.replace(/(\b[a-z][a-zA-Z0-9_$#%]+?\b)(?! *\()/gm, (res, a1) => {
-		if (variableReserved.indexOf(a1) === -1 && variableDouble.indexOf(a1) === -1 && !a1.startsWith('xx') && !a1.startsWith('_') && result.indexOf(`class ${a1} {`) === -1) {
-			varList.push(`var ${a1} = 0;`);
+	result = result.replace(/^.*?(\b[a-z][a-zA-Z0-9_$#%]*?\b)(?! *\()/gm, (res, a1) => {
+		const push = `${a1}`;
+		if (variableReserved.indexOf(a1) === -1 && variableDouble.indexOf(a1) === -1 && !a1.startsWith('xx') && !a1.startsWith('_') && result.indexOf(`class ${a1} {`) === -1) { //varList.indexOf(push) === -1 && 
+			varList.push(push);
+			return `if(typeof ${push} === 'undefined') var ${push} = 0;\n${res}`;
 		}
 		return res;
 	});
-	varList = varList.filter((item, pos) => varList.indexOf(item) === pos);
-	result = varList.join('\n') + '\n' + result;
+	//varList = varList.filter((item, pos) => varList.indexOf(item) === pos);
+	//result = varList.join('\n') + '\n' + result;
 
-	result = result.replace(/\bfunction await */gm, 'function ');
+	result = result.replace(/\bfunction await *(.*?)\.call\(window, */gm, 'function $1(');
 	result = result.replace(/\bresolve\(await +/gm, 'resolve(');
+	result = result.replace(/[\t ]+/gm, ' ');
+	result = result.replace(/(^[\t ]+|[\t ]+$)/gm, '');
 
 	result = restoreText(result, 2, comments);
 	result = restoreText(result, 1, quotes);
-	result = result.replace(/([^\\])\\(?!\\)/gm, '$1\\\\');
+	result = result.replace(/\\/gm, '\\\\');
+	result = beautify(result);
 	return result;
 }
 
@@ -285,8 +305,8 @@ module.exports = {
 	parseBlitz: () => {
 		return initialize();
 	},
-	parseBB: (bb) => {
-		return parsePart(bb);
+	parseBB: (bb, directory) => {
+		return parsePart(bb, directory);
 	},
 	endProgram: () => {
 		return endProgram();

@@ -29,19 +29,17 @@ Function drawField(rtp)
 		Oval p\x - 2, p\y - 2, 4, 4
 	Next
 	rgb = 0
-	LockBuffer FrontBuffer()
+	;LockBuffer FrontBuffer()
 	For y1 = 0 To gfxY - 1
 		For x1 = 0 To gfxX - 1
 			If rtp = 2 Then
 				x = x1: y = y1
-				rgb = ReadPixelFast(x, y, FrontBuffer()) And $FFFFFF
-
-Text 0,0, rgb
+				rgb = ReadPixel(x, y, FrontBuffer()) And $FFFFFF
 			Else
 				Repeat
 					If KeyDown(1) Then UnlockBuffer FrontBuffer(): Return
 					x = Rnd(gfxX): y = Rnd(gfxY)
-					rgb = ReadPixelFast(x, y, FrontBuffer()) And $FFFFFF
+					rgb = ReadPixel(x, y, FrontBuffer()) And $FFFFFF
 				Until rgb = 0
 			EndIf
 			lengthBest# = gfxX+gfxY
@@ -52,12 +50,13 @@ Text 0,0, rgb
 						r1 = p\r: g1 = p\g: b1 = p\b
 					EndIf
 				Next
-				WritePixelFast x, y, r1*$10000+g1*$100+b1, FrontBuffer()
+				WritePixel x, y, r1*$10000+g1*$100+b1, FrontBuffer()
 			EndIf
 		Next
 		If KeyDown(1) Then UnlockBuffer FrontBuffer(): Return
+		Delay 1
 	Next
-	UnlockBuffer FrontBuffer()
+	;UnlockBuffer FrontBuffer()
 End Function
 
 Function init(pMax#, rsc#)

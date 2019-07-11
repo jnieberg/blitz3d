@@ -14,13 +14,15 @@ function _debuglog(text, color = '#fff') {
 	_debugLogCount += 1;
 }
 
-function _debugerror(err, log = false) {
+function _errorlog(err, log = false) {
 	if (log) {
 		console.error(err);
 	}
-	const error = err.stack.replace(/[\r\n\t\s]+/gm, ' ');
-	const message = error.replace(/ *\(http:\/\/.*$/gm, '');
-	const file = error.replace(/^.* +at +https?:\/\/.*\/(.*?)\.js:.*$/gm, '$1').toUpperCase();
-	const line = error.replace(/^.* +at +https?:\/\/.*\/.*?\.js:(.*?):.*$/gm, '$1');
-	_debuglog(`[${file}] - ${message} (line ${line})`, '#f57');
+	try {
+		const error = err.stack.replace(/[\r\n\t\s]+/gm, ' ');
+		const message = error.replace(/ *(\(|at +)?http:\/\/.*$/gm, '');
+		const file = error.replace(/^.* +at +https?:\/\/.*\/(.*?)\.js:.*$/gm, '$1').toUpperCase();
+		const line = error.replace(/^.* +at +https?:\/\/.*\/.*?\.js:(.*?):.*$/gm, '$1');
+		_debuglog(`[${file}] - ${message} (line ${line})`, '#f57');
+	} catch (e) { }
 }

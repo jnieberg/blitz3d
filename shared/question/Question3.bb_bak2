@@ -1,0 +1,149 @@
+SeedRnd 65548537
+Graphics 800, 600, 32
+ClsColor 0, 128, 255
+
+f1 = LoadFont("Arial", 40)
+SetFont f1
+f2 = LoadFont("Arial", 30)
+f3 = LoadFont("Courier New", 40, True)
+
+Function scramble$(a$, b$)
+	a$=Upper$(a$): b$=Upper(b$): c$ = ""
+	For i = 1 To Len(a$)
+		If Mid$(a$, i, 1) <> " "
+			j = Rand(1, Len(c$)+1)
+			c$ = Left$(c$, j-1) + Mid$(a$, i, 1) + Mid$(c$, j)
+		EndIf
+	Next
+	j = Rand(1, Len(c$)+1)
+	c$ = Left$(c$, j-1) + b$ + Mid$(c$, j)
+	Return c$
+End Function
+
+Function printBlock(x, y, t$, w, ln, pg=0, h#=0.0, fnt=0)
+	If fnt<>0 Then SetFont fnt
+	cr=ColorRed(): cg=ColorGreen(): cb=ColorBlue()
+	t$=t$+"\"
+	If h=0.0 Then h=0.65*FontHeight()
+	j=1: k=1: p=0: l=0: rn=False
+	For i=1 To Len(t$)
+		ch$=Mid$(t$, i, 1)
+		If StringWidth(Mid$(t$, j, i-j))>=w Or ch$=" " Or ch$="\" Or ch$="|" Or i=Len(t$) Then j=i+1
+		If StringWidth(Mid$(t$, k, i-k))>=w Or i=Len(t$) Or ch$="\" Or ch$="|"
+			x1=0: y1=0: sw2=0: sw=0
+			tf$=Mid$(t$, k, j-k)
+			tf$=Left$(tf$, Len(tf$)-1)
+			k=j
+			If p=pg
+				ce=False
+				If Left$(tf$, 1)="#" ;simple color
+					sp1=Mid$(tf$, 2, 1): sp2=Mid$(tf$, 3, 1): sp3=Mid$(tf$, 4, 1)
+					Color getMin(sp1*32, 255), getMin(sp2*32, 255), getMin(sp3*32, 255)
+					tf$=Mid$(tf$, 5)
+				EndIf
+				If Right$(tf$, 1)="#" ;end simple color
+					ce=True
+					tf$=Left$(tf$, Len(tf$)-1)
+				EndIf
+				;text
+				tf2$=""
+				For m=1 To Len(tf$)
+					a1$=Mid$(tf$, m, 1)
+					If fnt<>0
+						If a1$="<" Then x1=0:y1=0: rn=True
+						If a1$=">" Then x1=0:y1=0: rn=False
+					EndIf
+					If a1$<>"<" And a1$<>">"
+						sw2=StringWidth(tf2$): sw=StringWidth(tf$)
+						If rn Then SetFont fontSpellCast: a1$=a1$+"  "
+						Text x+sw2-x1-0.5*sw, y+h*l+y1, a1$, False, False
+						tf2$=tf2$+a1$
+					EndIf
+					If fnt<>0 Then SetFont fnt
+				Next
+				If textWriteTo=2 And i=Len(t$)-1
+					Text x+sw2+StringWidth(Mid$(t$, Len(t$)-2, 1))-4-x1-0.5*sw, y+h*l+y1, "|", False, False
+				EndIf
+				If ce Then Color cr, cg, cb
+			ElseIf p>pg
+				Exit;gfxX/60
+			EndIf
+			l=l+1: If l>=ln Or ch$="|" Then l=0: p=p+1
+		EndIf
+	Next
+End Function
+
+Function getMin(a, b)
+	If a > b Then Return b Else Return a
+End Function
+
+Function getMax(a, b)
+	If a < b Then Return b Else Return a
+End Function
+
+a1$ = "LONDEN"
+b1$ = "LONDEN"
+c1$ = "... .. .. ....... ....... ... .. ...... .. .........?"
+d1$ = "In welke stad won Ajax voor de eerste keer de cup met de grote oren?"
+For j = 0 To 19
+	Select j
+		Case 0: a$ = "SCHOONBROER":			b$ = "O":	d$ = "Hoe heet een zwager in België?"
+		Case 1: a$ = "SCHOENEN":			b$ = "I":	d$ = "Wat zijn espadrilles?"
+		Case 2: a$ = "HOF VAN EDEN":		b$ = "L":	d$ = "Hoe heet het aardse paradijs?"
+		Case 3: a$ = "NERD":				b$ = "T":	d$ = "Hoe noem je iemand die leergierig is maar sociaal zwak?"
+		Case 4: a$ = "CHAMPAGNE":			b$ = "P":	d$ = "Welke wijn drink je uit een fluut?"
+		Case 5: a$ = "BLUBBER":				b$ = "K":	d$ = "Hoe heet het vet onder de huid van walrussen?"
+		Case 6: a$ = "IDEFIX":				b$ = "W":	d$ = "Wat is de naam van een hondje wat dwangvoorstelling betekent?"
+		Case 7: a$ = "SCHEPIJS":			b$ = "D":	d$ = "Hoe noem je onverpakt consumptieijs?"
+		Case 8: a$ = "VRIJHEIDSTOREN":		b$ = "C":	d$ = "Hoe heet het gebouw wat de Twin Towers gaat vervangen?"
+		Case 9: a$ = "BLOEDUITSTORTING":	b$ = "S":	d$ = "Wat is een hematoom?"
+		Case 10:a$ = "VOORBEREIDEND":		b$ = "N":	d$ = "Waar staat de V voor in de schoolopleiding V.W.O.?"
+		Case 11:a$ = "FLORA":				b$ = "V":	d$ = "Wie is de godin van de bloemen?"
+		Case 12:a$ = "MOVING PICTURE":		b$ = "X":	d$ = "Waarvoor staat de MP van MP3 speler?"
+		Case 13:a$ = "STUDIEFINANCIERING":	b$ = "U":	d$ = "Wat bedoelt een student met stufie?"
+		Case 14:a$ = "HET ANKER":			b$ = "M":	d$ = "Wat is het symbool van de hoop?"
+		Case 15:a$ = "CAPITOOL":			b$ = "J":	d$ = "Hoe heet het gebouw van het Amerikaanse parlement?"
+		Case 16:a$ = "BUDDYSEAT":			b$ = "G":	d$ = "Hoe heet een tweepersoons-zadel van een motor?"
+		Case 17:a$ = "SLANGENKUIL":			b$ = "R":	d$ = "Wat is de reptielenvariant van een wespennest?"
+		Case 18:a$ = "KAMPEN":				b$ = "A":	d$ = "In welke stad is Jaap Stam geboren?"
+		Case 19:a$ = "HOGER":				b$ = "E":	d$ = "Wat is naast sneller en sterker het motto van de Olypische spelen?"
+	End Select
+	c$ = scramble$(a$, b$)
+	a$=Upper$(a$)
+	b$=Upper$(b$)
+	b1$=Upper$(b1$)
+	d1$=Upper$(d1$)
+	For i=0 To 1
+		Cls
+		Color 255, 255, 255
+		Line 0, 400, 800, 400
+		SetFont f2
+		Color 255, 255, 128
+		printBlock(400, 50, Upper$(d$), 600, 8, 0, 30)
+		Color 255, 255, 255
+		SetFont f1
+		If i=0
+			Locate 400 - StringWidth(c$)/2, 300
+			Print Upper$(c$)
+		Else
+			Locate 400 - StringWidth(a$ + " (" + b$ + ")")/2, 300
+			Print Upper$(a$ + " (" + b$ + ")")
+		EndIf
+		SetFont f3
+		Color 128, 224, 255
+		For k = 1 To Len(d1$)
+			If Mid$(d1$, k, 1) = b$
+				If i = 0 Then c1$ = Left$(c1$, k-1) + Chr$(287) + Mid$(c1$, k+1) Else c1$ = Left$(c1$, k-1) + b$ + Mid$(c1$, k+1)
+			EndIf
+		Next
+;		For k = 1 To Len(b1$)
+;			If Mid$(b1$, k, 1) = b$
+;				If i = 0 Then a1$ = Left$(a1$, k-1) + Chr$(287) + Mid$(a1$, k+1) Else a1$ = Left$(a1$, k-1) + b$ + Mid$(a1$, k+1)
+;			EndIf
+;		Next
+		printBlock(400, 450, Upper$(c1$), 600, 8, 0, 30)
+		printBlock(400, 550, Upper$(a1$), 600, 8, 0, 30)
+		FlushKeys
+		While (Not KeyHit(57)): Wend
+	Next
+Next
