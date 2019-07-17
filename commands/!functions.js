@@ -57,6 +57,9 @@ function _lockPointer() {
 	}
 }
 
+function _reverseString(string) {
+	return string.split('').reverse().join('');
+}
 function _string2bytes(string, length) {
 	return string.split('').slice(-length).map(byte => byte.charCodeAt(0));
 }
@@ -64,10 +67,10 @@ function _bytes2string(bytes, length) {
 	return bytes.map(byte => String.fromCharCode(byte)).slice(-length).join('');
 }
 function _int2string(integer, length = 4) {
-	return _hex(integer, length * 2).match(/.{1,2}/g).map(result => String.fromCharCode(parseInt(result, 16))).join('');
+	return _reverseString(_hex(integer, length * 2).match(/.{1,2}/g).map(result => String.fromCharCode(parseInt(result, 16))).join(''));
 }
 function _string2int(string) {
-	return parseInt((string.match(/[\w\W]/g) || []).map((result, index) => _hex(result.charCodeAt(0) || 0, 2)).join(''), 16);
+	return parseInt((_reverseString(string).match(/[\w\W]/g) || []).map((result, index) => _hex(result.charCodeAt(0) || 0, 2)).join(''), 16);
 }
 function _array2string(buf) {
 	return String.fromCharCode.apply(null, new Uint16Array(buf));
@@ -155,13 +158,9 @@ function _dimGetIndex(dimensions, position) {
 	}, 0);
 }
 
-function _declare(variable) {
-	if (typeof variable === 'undefined') {
-		let variable = 0;
-	} else {
-		variable = variable;
-	}
-	return variable;
+var _dataList = [];
+function _data(label, data) {
+	_dataList.push(`__${label}`, ...data);
 }
 
 class Float {
@@ -181,7 +180,7 @@ class Float {
 	};
 }
 
-class Dim {
+class _Dim {
 	_dimensions;
 	_array;
 
@@ -221,4 +220,16 @@ class Dim {
 		const position = [...arguments];
 		return this._getArray(this._array, position);
 	}
+}
+
+class _Obj {
+	_object;
+
+	constructor(obj = 0) {
+		this._object = obj;
+	}
+
+	valueOf = () => {
+		return this._object;
+	};
 }

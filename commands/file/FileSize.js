@@ -1,3 +1,5 @@
 async function _filesize(filename) {
-	return await _getCommand('filesize', filename);
+	const res = await _getCommand('filesize', filename)
+	console.log('size', filename, res);
+	return res;
 }

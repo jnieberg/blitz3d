@@ -2,7 +2,7 @@ const fs = require('fs');
 
 exports.fn = (res, query) => {
 	try {
-		fs.writeFile(query.name, query.data, 'utf8', (err, data) => {
+		fs.writeFile(query.name, query.data, 'binary', (err, data) => {
 			if (err) throw err;
 			res.json({
 				name: query.name,

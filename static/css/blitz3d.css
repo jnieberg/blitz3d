@@ -47,11 +47,15 @@ body #blitzPointer {
   height: 24px;
   margin-left: -5px;
   margin-top: -2px;
+  display: block;
+}
+
+body #blitzPointer.hide {
   display: none;
 }
 
-body #blitzPointer.show {
-  display: block;
+body #blitzPointer.hidePointer {
+  display: none;
 }
 
 body .debug {

@@ -75,7 +75,7 @@ const server = app
 		const requestUrl = url.parse(req.url);
 		res.end(writeHtml(req, `<canvas id="blitz" width="400" height="300"></canvas>
 	<pre class="debug"><code></code></pre>
-	<img src="/static/images/mouse.png" id="blitzPointer" width="24" height="24">
+	<img src="/static/images/mouse.png" id="blitzPointer" width="24" height="24" class="hide">
 	<script src="/blitz3d.js"></script>
 	<script src="${requestUrl.pathname}.js"></script>`));
 	})
@@ -100,7 +100,7 @@ const server = app
 <pre class="debug"><code></code></pre>
 <script src="/blitz3d.js"></script>
 <div id="blitzScript"></div>
-<img src="/static/images/mouse.png" id="blitzPointer" width="24" height="24">
+<img src="/static/images/mouse.png" id="blitzPointer" width="24" height="24" class="hide">
 <script>
 var _eventText = document.querySelector('#blitzText');
 var _blitzCode = localStorage.getItem('blitz3d-source');

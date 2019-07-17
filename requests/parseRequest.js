@@ -95,13 +95,13 @@ module.exports = {
 				resp.end(`(async () => {
 try {
 _endgraphics();
-await _changedir('/');
+await _changedir('${directory}');
 ${result}
 } catch(err) {
 if(err && err.message) _errorlog(err, true);
-			}
-${ blitz.endProgram()}
-})(); `);
+}
+${blitz.endProgram()}
+})();`);
 			});
 			fStream.on('error', (err) => {
 				resp.end();

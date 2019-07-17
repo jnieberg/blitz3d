@@ -3,7 +3,7 @@ function _getkey() {
 	function getCode(event) {
 		_getKeyEvent = event;
 	}
-	_addListener('keypress', getCode, 'getkey');
+	_addListener('keydown', getCode, 'getkey');
 	// return new Promise((resolve, reject) => {
 	// 	setTimeout(() => {
 	// 		if (_getKeyEvent && _getKeyEvent.location === 0) {

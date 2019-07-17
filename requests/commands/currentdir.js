@@ -1,3 +1,5 @@
+const path = require('path');
+
 exports.fn = (res, query) => {
-	res.end(process.cwd());
+	res.end(path.normalize(process.cwd() + '\\'));
 };

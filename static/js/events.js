@@ -12,11 +12,13 @@ window.onload = () => {
 			var rect = _eventCanvas.getBoundingClientRect();
 			_mouseXSpeedOffset = event.movementX;
 			_mouseYSpeedOffset = event.movementY;
-			_mouseXPosition += _mouseXSpeedOffset;
-			_mouseYPosition += _mouseYSpeedOffset;
-			// if (_mouseXPosition < 0 || _mouseXPosition > _eventCanvas.width || _mouseYPosition < 0 || _mouseYPosition > _eventCanvas.height) {
-			// 	document.exitPointerLock();
-			// }
+			if (_pointerLocked) {
+				_mouseXPosition += _mouseXSpeedOffset;
+				_mouseYPosition += _mouseYSpeedOffset;
+			} else {
+				_mouseXPosition = event.x - _eventCanvas.offsetLeft;
+				_mouseYPosition = event.y - _eventCanvas.offsetTop;
+			}
 			_mouseXPosition = _mouseXPosition < 0 ? 0 : _mouseXPosition > _eventCanvas.width ? _eventCanvas.width : _mouseXPosition;
 			_mouseYPosition = _mouseYPosition < 0 ? 0 : _mouseYPosition > _eventCanvas.height ? _eventCanvas.height : _mouseYPosition;
 			_mouseElement.setAttribute('style', `left: ${_mouseXPosition + rect.left}px; top: ${_mouseYPosition + rect.top}px;`);
@@ -40,10 +42,13 @@ window.onerror = (err, url, line) => {
 	_errorlog(err, true);
 };
 
+var _pointerLocked = false;
 document.addEventListener('pointerlockchange', (event) => {
 	if (document.pointerLockElement === _eventCanvas) {
 		_mouseElement.classList.add('show');
+		_pointerLocked = true;
 	} else {
 		_mouseElement.classList.remove('show');
+		_pointerLocked = false;
 	}
 });

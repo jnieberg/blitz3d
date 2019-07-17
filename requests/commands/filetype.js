@@ -1,8 +1,10 @@
 const fs = require('fs');
+const path = require('path');
 
 exports.fn = (res, query) => {
 	try {
-		if (fs.statSync(query).isDirectory()) {
+		const folder = path.normalize(path.dirname(require.main.filename) + '\\shared\\' + query.root + '\\' + query.filename);
+		if (fs.statSync(folder).isDirectory()) {
 			res.end('2');
 		} else {
 			res.end('1');
