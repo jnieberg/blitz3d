@@ -1,7 +1,8 @@
 async function _openfile(filename) {
-	const result = await _getCommand('openfile', filename);
+	let path = _normalizeFile(filename);
+	const result = await _getCommand('openfile', path);
 	return {
-		name: filename.trim(),
+		name: path,
 		data: result,
 		position: 0,
 		readonly: false

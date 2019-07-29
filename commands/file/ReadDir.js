@@ -1,8 +1,8 @@
 var _readDirList = {};
 
-async function _readdir(foldername) {
-	const dir = await _postCommand('readdir', { root: _currentDirCached, folder: foldername });
+async function _readdir(directory) {
+	let path = _normalizeFile(directory);
+	const dir = await _postCommand('readdir', { folder: path });
 	_readDirList[dir.folder] = dir;
-	console.log(dir);
 	return _readDirList[dir.folder];
 }

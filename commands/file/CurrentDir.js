@@ -1,5 +1,4 @@
 var _currentDirCached = '';
-async function _currentdir() {
-	_currentDirCached = _currentDirCached || await _getCommand('currentdir');
+function _currentdir() {
 	return _currentDirCached;
 }

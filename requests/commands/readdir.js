@@ -2,17 +2,10 @@ const fs = require('fs');
 const path = require('path');
 
 exports.fn = (res, query) => {
-	const folder = path.normalize(path.dirname(require.main.filename) + '\\shared\\' + query.root + '\\' + query.folder);
+	const folder = path.normalize(path.dirname(require.main.filename) + '\\public\\' + query.folder);
 	fs.readdir(folder, (err, files) => {
 		if (files) {
-			const result = [{
-				name: '..',
-				type: 2
-			},
-			{
-				name: '.',
-				type: 2
-			}];
+			const result = [];
 			files.forEach(file => {
 				let type = 1;
 				try {

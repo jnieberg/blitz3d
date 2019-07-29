@@ -1,4 +1,6 @@
 var _mouseZSpeedOffset = 0;
 function _mousezspeed() {
-	return _mouseZSpeedOffset;
+	const result = _mouseZSpeedOffset;
+	_mouseZSpeedOffset = 0;
+	return result;
 }

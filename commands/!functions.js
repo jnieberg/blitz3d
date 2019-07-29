@@ -58,7 +58,7 @@ function _lockPointer() {
 }
 
 function _reverseString(string) {
-	return string.split('').reverse().join('');
+	return string.split('').reduce((reversed, character) => character + reversed, '');
 }
 function _string2bytes(string, length) {
 	return string.split('').slice(-length).map(byte => byte.charCodeAt(0));
@@ -66,23 +66,26 @@ function _string2bytes(string, length) {
 function _bytes2string(bytes, length) {
 	return bytes.map(byte => String.fromCharCode(byte)).slice(-length).join('');
 }
+// function _int2string(integer, length = 4) {
+// 	return _reverseString(_hex(integer, length * 2).match(/.{1,2}/g).map(result => String.fromCharCode(parseInt(result, 16))).join(''));
+// }
 function _int2string(integer, length = 4) {
-	return _reverseString(_hex(integer, length * 2).match(/.{1,2}/g).map(result => String.fromCharCode(parseInt(result, 16))).join(''));
-}
-function _string2int(string) {
-	return parseInt((_reverseString(string).match(/[\w\W]/g) || []).map((result, index) => _hex(result.charCodeAt(0) || 0, 2)).join(''), 16);
-}
-function _array2string(buf) {
-	return String.fromCharCode.apply(null, new Uint16Array(buf));
-}
-function _string2array(str) {
-	var buf = new ArrayBuffer(str.length * 2); // 2 bytes for each char
-	var bufView = new Uint16Array(buf);
-	for (var i = 0, strLen = str.length; i < strLen; i++) {
-		bufView[i] = str.charCodeAt(i);
+	var ascii = '';
+	for (let i = length - 1; i >= 0; i--) {
+		ascii = String.fromCharCode((integer >> (8 * i)) & 255) + ascii;
 	}
-	return buf;
-}
+	return ascii;
+};
+function _string2int(numString) {
+	var result = 0;
+	for (let i = numString.length - 1; i >= 0; i--) {
+		result += numString.charCodeAt(i) << (8 * i);
+	}
+	return result;
+};
+// function _string2int(string) {
+// 	return parseInt((_reverseString(string).match(/[\w\W]/g) || []).map((result, index) => _hex(result.charCodeAt(0) || 0, 2)).join(''), 16);
+// }
 
 var _asyncTimer = _millisecs();
 function _async() {
@@ -96,7 +99,6 @@ function _async() {
 			});
 		});
 	} else {
-		_flipSync = false;
 		return 1;
 	}
 }
@@ -145,6 +147,15 @@ function _postCommand(command, arguments = {}) {
 	});
 }
 
+function _normalizeFile(filename) {
+	let newPath = _currentDirCached + '/' + filename;
+	if (filename.indexOf('/') === 0 || filename.indexOf('\\') === 0) {
+		newPath = filename;
+	}
+	newPath = newPath.replace(/[\\\/]+/g, '\\').replace(/(\\.*?)\\\.\./g, '$1');
+	return newPath;
+}
+
 function _bufferEditable(buffer = _graphicsBuffer) {
 	return buffer && buffer.context && !buffer.locked;
 }
@@ -152,9 +163,12 @@ function _bufferEditable(buffer = _graphicsBuffer) {
 function _dimGetIndex(dimensions, position) {
 	let len = 1;
 	return position.reduce((total, num, index) => {
-		const result = total + len * num;
-		len = len * (dimensions[index] + 1);
-		return result;
+		if (dimensions[index]) {
+			const result = total + len * num;
+			len = len * (dimensions[index] + 1);
+			return result;
+		}
+		return 0;
 	}, 0);
 }
 
@@ -163,16 +177,16 @@ function _data(label, data) {
 	_dataList.push(`__${label}`, ...data);
 }
 
-class Float {
+class _Float {
 	constructor(float) {
-		const result = float !== null && typeof float !== 'undefined' && typeof float.value !== 'undefined' ? float.value : float || 0.0;
+		const result = float !== null && typeof float !== 'undefined' && typeof float.value !== 'undefined' ? float.value : parseFloat(float) || 0.0;
 		this.float = result.toPrecision(8).replace(/([^\.])0+$/, '$1');
 	}
 	get value() {
 		return parseFloat(this.float);
 	}
 	set value(float) {
-		const result = float !== null && typeof float !== 'undefined' && typeof float.value !== 'undefined' ? float.value : float || 0.0;
+		const result = float !== null && typeof float !== 'undefined' && typeof float.value !== 'undefined' ? float.value : parseFloat(float) || 0.0;
 		this.float = result.toPrecision(8).replace(/([^\.])0+$/, '$1');
 	}
 	valueOf = () => {
@@ -207,18 +221,22 @@ class _Dim {
 	}
 
 	_getArray(array, indices) {
-		var returnValue;
+		var returnValue = 0;
 		if (indices.length === 0) {
 			returnValue = array;
 		} else {
-			returnValue = this._getArray(array[indices[0]], indices.slice(1));
+			const index = Math.floor(indices[0].valueOf());
+			if (array[index]) {
+				returnValue = this._getArray(array[index], indices.slice(1));
+			}
 		}
 		return returnValue;
 	}
 
 	_get() {
 		const position = [...arguments];
-		return this._getArray(this._array, position);
+		let result = this._getArray(this._array, position);
+		return isNaN(result) ? result : Number(result);
 	}
 }
 

@@ -7,6 +7,7 @@ const blitz = require('./blitz');
 const { postRequest } = require('./requests/postRequest');
 const { getRequest } = require('./requests/getRequest');
 const { parseRequest, parseRequestBB } = require('./requests/parseRequest');
+const { parseFolder } = require('./requests/parseFolder');
 const portDefault = 3000;
 const port = process.env.PORT || portDefault;
 const timeoutTimer = 10000;
@@ -30,6 +31,7 @@ var app = express();
 
 function writeHtml(req, body) {
 	const requestUrl = url.parse(req.url);
+	const pathname = decodeURI(requestUrl.pathname);
 	return `<!DOCTYPE html>
 <html lang="en">
 
@@ -40,13 +42,14 @@ function writeHtml(req, body) {
 	<script src="/static/js/howler.core.js"></script>
 	<script src="/static/js/howler.spatial.js"></script>
 	<link rel="stylesheet" type="text/css" href="/static/css/blitz3d.css">
-	<title>Blitz3D - ${requestUrl.pathname.replace(/^\//, '')}</title>
+	<style id="blitzFonts"></style>
+	<title>Blitz3D - ${pathname.replace(/^\//, '')}</title>
 </head>
 
 <body>
 	${body}
 </body>
-</html>`
+</html>`;
 }
 
 const server = app
@@ -73,7 +76,9 @@ const server = app
 	})
 	.get('*.bb', (req, res) => {
 		const requestUrl = url.parse(req.url);
-		res.end(writeHtml(req, `<canvas id="blitz" width="400" height="300"></canvas>
+		const result = parseFolder(req, res);
+		res.end(writeHtml(req, `<div id="blitzFolder">${result}</div>
+	<canvas id="blitz" width="400" height="300"></canvas>
 	<pre class="debug"><code></code></pre>
 	<img src="/static/images/mouse.png" id="blitzPointer" width="24" height="24" class="hide">
 	<script src="/blitz3d.js"></script>
@@ -82,20 +87,26 @@ const server = app
 	.get('/blitz3d.js', (req, res) => {
 		res.end(blitz.parseBlitz());
 	})
+	.get('/reload', (req, res) => {
+		const referer = req.headers.referrer || req.headers.referer || '/';
+		res.redirect(referer);
+	})
 	.get('*.bb.js', (req, res) => {
 		parseRequestBB(req, res);
 		res.setTimeout(timeoutTimer, () => {
 			res.status(status.notFound).end();
 		});
 	})
-	.get('/static(/css/*.css|/images/*.png|/js/*.js)', (req, res) => {
+	.get('/static(/css/*.css|/images/*.png|/js/*.js|/fonts/*.fon)', (req, res) => {
 		parseRequest(req, res);
 	})
-	.get('*.(css|jpg|gif|png|bmp|ogv|wav)', (req, res) => {
+	.get('*.(css|jpg|gif|png|bmp|ogv|wav|mp3|eot|ttf|svg|woff|woff3|html|htm)', (req, res) => {
 		parseRequest(req, res, false);
 	})
 	.get('/', (req, res) => {
-		res.end(writeHtml(req, `<textarea id="blitzText">; Your custom code</textarea>
+		const result = parseFolder(req, res);
+		res.end(writeHtml(req, `<div id="blitzFolder">${result}</div>
+<textarea id="blitzText">; Your custom code</textarea>
 <canvas id="blitz" width="400" height="300"></canvas>
 <pre class="debug"><code></code></pre>
 <script src="/blitz3d.js"></script>
@@ -121,6 +132,7 @@ function _eventTextExecute(callback = () => {}) {
 			var script = document.createElement('script');
 			script.innerHTML += '(async function Main() {\\n';
 			script.innerHTML += 'try {\\n';
+			script.innerHTML += 'await _loadfont(\\'courier\\', 18, false, false, false);\\n'
 			script.innerHTML += '_endgraphics();\\n';
 			script.innerHTML += 'await _changedir(\\'/\\');\\n';
 			script.innerHTML += xhr.response + '\\n';
@@ -140,6 +152,14 @@ _eventText.addEventListener('input', () => {
 });
 _eventTextExecute();
 </script>`));
+	})
+	.get('/*', (req, res) => {
+		const result = parseFolder(req, res);
+		if (result) {
+			res.end(writeHtml(req, `<div id="blitzFolder">${result}</div>`));
+		} else {
+			res.status(status.forbidden).end();
+		}
 	})
 	.listen(port, () => {
 		return console.log(`${color.fgGreen}[SYSTEM] - Started. Listening to http://localhost:${port}${color.reset}`);

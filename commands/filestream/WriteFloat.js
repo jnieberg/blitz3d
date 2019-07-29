@@ -1,6 +1,6 @@
 async function _writefloat(stream, floatP, offset) {
 	let float = floatP;
-	if (floatP instanceof Float) {
+	if (floatP instanceof _Float) {
 		float = floatP.value;
 	}
 	const farr = new Float32Array(1);

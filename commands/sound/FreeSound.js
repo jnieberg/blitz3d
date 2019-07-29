@@ -1,4 +1,6 @@
 function _freesound(media) {
-	media.unload();
+	if (media && media.unload) {
+		media.unload();
+	}
 	return undefined;
 }

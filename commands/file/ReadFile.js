@@ -1,7 +1,9 @@
 async function _readfile(filename) {
+	let path = _normalizeFile(filename);
+	console.log(path, filename);
 	return {
-		name: filename.trim(),
-		data: await _getCommand('openfile', filename),
+		name: path,
+		data: await _getCommand('openfile', path),
 		position: 0,
 		readonly: true
 	}

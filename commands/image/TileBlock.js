@@ -4,7 +4,7 @@ function _tileblock(image, x = 0, y = 0, frame = 0, buffer = _graphicsBuffer) {
 		buffer.context.fillStyle = 'rgb(0, 0, 0)';
 		buffer.context.fillRect(0, 0, buffer.canvas.width, buffer.canvas.height);
 		buffer.context.translate(x + _originX - image[frame].x, y + _originY - image[frame].y);
-		buffer.context.rect(-x, -y, buffer.canvas.width, buffer.canvas.height);
+		buffer.context.rect(-x, -y, buffer.canvas.width - _originX + image[frame].x, buffer.canvas.height - _originY + image[frame].y);
 		buffer.context.fillStyle = pattern;
 		buffer.context.fill();
 		buffer.context.translate(-(x + _originX - image[frame].x), -(y + _originY - image[frame].y));

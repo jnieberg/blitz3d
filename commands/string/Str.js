@@ -1,3 +1,3 @@
 function _str(val) {
-	return val.toString();
+	return val.valueOf().toPrecision(8).toString();
 }

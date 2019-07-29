@@ -1,6 +1,7 @@
 var _graphicsBufferList = [];
 var _graphicsBuffer = {};
 var _graphicsDepth;
+var _graphicsMode;
 var _graphicsMidHandle = false;
 var _graphicsModeList = [
 	{},
@@ -94,16 +95,18 @@ var _graphicsModeList = [
 		depth: 32
 	}
 ];
-function _graphics(width, height, depth, mode) {
+function _graphics(width, height, depth = 32, mode = 0) {
 	for (let id of ['_front', '_back']) {
 		_clscolor(0, 0, 0);
 		_color(255, 255, 255);
-		_graphicsBuffer = _graphicsCreate(width, height, id);
+		_graphicsBuffer = _graphicsCreate(width, height, id, mode);
 		_graphicsBufferList[id] = { ..._graphicsBuffer };
 	}
 	const front = _frontbuffer();
 	_graphicsBuffer.id = '_front';
 	_graphicsDepth = depth;
+	_graphicsMode = mode;
+	_graphicsMidHandle = false;
 	_eventCanvas = front.canvas;
 	_setbuffer(front);
 	_locate(0, 0);
@@ -114,9 +117,8 @@ function _graphics(width, height, depth, mode) {
 	_moveMouseY = height / 2;
 }
 
-function _graphicsCreate(width, height, id) {
+function _graphicsCreate(width, height, id, mode = -1) {
 	const buffer = {};
-	const font = _loadfont('courier', 18, false, false, false);
 	if (id === '_front') {
 		buffer.canvas = document.querySelector('#blitz');
 	} else {
@@ -136,10 +138,26 @@ function _graphicsCreate(width, height, id) {
 	buffer.transform12 = 0.0;
 	buffer.transform22 = 1.0;
 	buffer.context = buffer.canvas.getContext('2d');
+	if (id === '_front') {
+		buffer.context.restore();
+		buffer.context.save();
+		if (mode === 1) {
+			document.querySelector('#blitz').classList.add('full');
+			const w = window.innerWidth;
+			const h = window.innerHeight;
+			buffer.canvas.width = w;
+			buffer.canvas.height = h;
+			buffer.context.scale(w / width, h / height);
+		} else if (mode === 0 || mode === 2 || mode === 3) {
+			buffer.canvas.width = width;
+			buffer.canvas.height = height;
+			document.querySelector('#blitz').classList.remove('full');
+		}
+	}
 	buffer.context.textBaseline = 'top';
 	buffer.context.textAlign = 'left';
 	buffer.context.lineWidth = 1;
 	buffer.context.clearRect(0, 0, width, height);
-	_setfont(font, buffer);
+	_setfont(_setFontCurrent, buffer);
 	return buffer;
 }

@@ -7,7 +7,7 @@ function _rect(x, y, w, h, solid = true) {
 			_graphicsBuffer.context.translate(0.5, 0.5);
 			_graphicsBuffer.context.strokeStyle = _colorRGB();
 			_graphicsBuffer.context.beginPath();
-			_graphicsBuffer.context.rect(x + _originX, y + _originY, w, h);
+			_graphicsBuffer.context.rect(x + _originX, y + _originY, w - 1, h - 1);
 			_graphicsBuffer.context.stroke();
 			_graphicsBuffer.context.translate(-0.5, -0.5);
 		}

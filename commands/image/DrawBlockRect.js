@@ -23,7 +23,7 @@ function _drawblockrect(image, x, y, x2, y2, width, height, frame = 0, block = t
 		buffer.context.scale(scaleX, scaleY);
 		if (block) {
 			buffer.context.fillStyle = 'rgb(0, 0, 0)';
-			buffer.context.fillRect(targetX, targetY, width, height);
+			buffer.context.fillRect(targetX / scaleX, targetY / scaleY, width, height);
 		}
 		buffer.context.drawImage(image[frame].canvas, x2, y2, width, height, targetX / scaleX, targetY / scaleY, width, height);
 		buffer.context.restore();

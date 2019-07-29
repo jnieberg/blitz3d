@@ -8,7 +8,7 @@ function _readfloat(stream, position) {
 	bytes.forEach(function (b, i) {
 		view.setInt8(3 - i, b);
 	});
-	const float = new Float(view.getFloat32(0));
+	const float = new _Float(view.getFloat32(0));
 	stream.position += string.length;
 	return float;
 }

@@ -1,6 +1,6 @@
 function _print(txt = 0 || '', fix) {
 	if (_graphicsBuffer.context) {
-		if (txt instanceof Float) {
+		if (txt instanceof _Float) {
 			txt = txt.float;
 		} else if (typeof txt === 'number') {
 			if (txt.toString().indexOf('.') > -1) {
@@ -12,8 +12,9 @@ function _print(txt = 0 || '', fix) {
 			_loadScreen(0, -_setFontCurrent.height);
 			_printY = _printY - _setFontCurrent.height;
 		}
+		const offY = _setFontCurrent.height - _setFontCurrent.size;
 		_graphicsBuffer.context.fillStyle = _colorRGB();
-		_graphicsBuffer.context.fillText(txt, _printX + _writeX + _originX, _printY + _originY);
+		_graphicsBuffer.context.fillText(txt, _printX + _writeX + _originX, _printY + _originY + offY);
 		if (!fix) {
 			_printY = _printY + _setFontCurrent.height;
 			_printX = 0;

@@ -6,16 +6,6 @@ function _keyHitGetCode(event) {
 _addListener('keydown', _keyHitGetCode, 'keyhit');
 
 function _keyhit(code) {
-	// return new Promise((resolve, reject) => {
-	// 	setTimeout(() => {
-	// 		if (_keyHitTimes[code] > 0) {
-	// 			resolve(_keyHitTimes[code] || 0);
-	// 			_keyHitTimes[code] = 0;
-	// 		} else {
-	// 			resolve(0);
-	// 		}
-	// 	});
-	// });
 	const res = _keyHitTimes[code];
 	if (res > 0) {
 		_keyHitTimes[code] = 0;

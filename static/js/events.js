@@ -32,9 +32,9 @@ window.onload = () => {
 			return false;
 		};
 
-		_eventCanvas.addEventListener('click', (event) => {
-			_lockPointer();
-		});
+		// _eventCanvas.addEventListener('click', (event) => {
+		// 	_lockPointer();
+		// });
 	}
 };
 
@@ -43,12 +43,12 @@ window.onerror = (err, url, line) => {
 };
 
 var _pointerLocked = false;
-document.addEventListener('pointerlockchange', (event) => {
-	if (document.pointerLockElement === _eventCanvas) {
-		_mouseElement.classList.add('show');
-		_pointerLocked = true;
-	} else {
-		_mouseElement.classList.remove('show');
-		_pointerLocked = false;
-	}
-});
+// document.addEventListener('pointerlockchange', (event) => {
+// 	if (document.pointerLockElement === _eventCanvas) {
+// 		_mouseElement.classList.add('show');
+// 		_pointerLocked = true;
+// 	} else {
+// 		_mouseElement.classList.remove('show');
+// 		_pointerLocked = false;
+// 	}
+// });

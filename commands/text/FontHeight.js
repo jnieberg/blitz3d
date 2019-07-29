@@ -1,3 +1,3 @@
 function _fontheight() {
-	return _setFontCurrent.size;
+	return _setFontCurrent.height;
 }

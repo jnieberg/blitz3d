@@ -1,11 +1,12 @@
 var _setFontCurrent = {
 	family: 'courier',
-	size: 18,
-	height: 18,
+	size: 13,
+	height: 17,
 	bold: false,
 	italic: false,
 	underline: false
 };
+
 function _setfont(font, buffer = _graphicsBuffer) {
 	if (buffer.context) {
 		_setFontCurrent = font;

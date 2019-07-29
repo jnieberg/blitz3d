@@ -9,7 +9,7 @@ async function _playsound(media) {
 			id: id,
 			sound: media.sound
 		};
-		while (!(await _channelplaying(channel))) { }
+		while (await _async() && !_channelplaying(channel)) { }
 		return channel;
 	} catch (err) {
 		console.warn('Failed to play sound', media.filename, '-', err.message);

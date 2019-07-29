@@ -1,6 +1,6 @@
 async function _writebytes(bank, stream, offset, count) { // from bank to stream
-	const bytes = new Uint8Array(bank, offset, count).toString().split(',');
-	const string = _bytes2string(bytes);
-	const result = await _writeline(stream, string);
-	return result.position;
+	let string = bank.data.substring(offset, offset + count);
+	string = string.substring(offset, offset + count);
+	stream.data = string;
+	return string.length;
 }
