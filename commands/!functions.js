@@ -152,7 +152,7 @@ function _normalizeFile(filename) {
 	if (filename.indexOf('/') === 0 || filename.indexOf('\\') === 0) {
 		newPath = filename;
 	}
-	newPath = newPath.replace(/[\\\/]+/g, '\\').replace(/(\\.*?)\\\.\./g, '$1');
+	newPath = newPath.replace(/[\\\/]+/g, '/').replace(/(\\.*?)\\\.\./g, '$1');
 	return newPath;
 }
 

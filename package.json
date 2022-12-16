@@ -4,12 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npm install && nodemon index.js",
+    "dev": "nodemon index.js",
+    "prod": "forever start index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.0",
+    "forever": "^2.0.0",
     "fs": "0.0.1-security",
     "jimp": "^0.6.4",
     "js-beautify": "^1.10.0",
@@ -20,5 +23,8 @@
     "reload": "^3.0.1",
     "uuid": "^3.3.2",
     "watch": "^1.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
   }
 }

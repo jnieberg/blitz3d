@@ -294,7 +294,7 @@ function parsePart(part, directory) {
 		return `${m1} (${(m2 + m3).replace(/([^<>+\-\n]) *([=]) *(?![<>+\n])/gim, '$1$2$2')})${m4}`;
 	});
 	result = result.replace(/^switch([\w\W]*?)break;/gim, 'switch$1');
-	result = result.replace(/\bcase\b *(.+?)[ :]/gim, (res, a1) => {
+	result = result.replace(/\bcase\b *(.+)[:\n]/gim, (res, a1) => {
 		return `case ${a1.replace(/(.*?), */gi, '$1:\ncase ')}: `;
 	});
 	let notWhile = 0;

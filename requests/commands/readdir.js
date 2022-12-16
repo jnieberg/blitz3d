@@ -2,14 +2,14 @@ const fs = require('fs');
 const path = require('path');
 
 exports.fn = (res, query) => {
-	const folder = path.normalize(path.dirname(require.main.filename) + '\\public\\' + query.folder);
+	const folder = path.normalize(path.dirname(require.main.filename) + '/public/' + query.folder);
 	fs.readdir(folder, (err, files) => {
 		if (files) {
 			const result = [];
 			files.forEach(file => {
 				let type = 1;
 				try {
-					if (fs.statSync(folder + '\\' + file).isDirectory()) {
+					if (fs.statSync(folder + '/' + file).isDirectory()) {
 						type = 2;
 					}
 					result.push({
@@ -19,7 +19,7 @@ exports.fn = (res, query) => {
 				} catch (err) { }
 			});
 			res.json({
-				folder: path.normalize(query.folder + '\\'),
+				folder: path.normalize(query.folder + '/'),
 				file: result,
 				position: 0
 			});

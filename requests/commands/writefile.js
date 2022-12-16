@@ -3,7 +3,7 @@ const path = require('path');
 
 exports.fn = (res, query) => {
 	try {
-		const filename = path.normalize(path.dirname(require.main.filename) + '\\public\\' + query.name);
+		const filename = path.normalize(path.dirname(require.main.filename) + '/public/' + query.name);
 		fs.writeFile(filename, query.data, 'binary', (err, data) => {
 			if (err) throw err;
 			res.json({
