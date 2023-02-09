@@ -1,10 +1,7 @@
-const fs = require("fs");
-const url = require("url");
-const mm = require("music-metadata");
-const path = require("path");
-const baseDirectory = path.dirname(require.main.filename);
-const sharedDirectory = path.normalize(baseDirectory + "/public");
-const blitz = require("../blitz");
+import { createReadStream } from "fs";
+import { parse } from "url";
+import { parseFile as parseMusicFile } from "music-metadata";
+import { folder } from "./folder.js";
 const status = {
   ok: 200,
   badRequest: 400,
@@ -31,10 +28,15 @@ var mimetype = {
   ".mp3": "audio/mpeg",
 };
 
-function parseRequestEnd(requestUrl, res, mime, directory = baseDirectory, referer = "/", sampleRate = null, stat = status.ok) {
-  const fileStream = fs.createReadStream(`${directory}${decodeURI(requestUrl.pathname)}`);
+/**
+ * @param {import("url").UrlWithStringQuery} requestUrl
+ * @param {import("express-serve-static-core").Response<any, Record<string, any>, number>} res
+ * @param {string} mime
+ */
+function parseRequestEnd(requestUrl, res, mime, baseDirectory = folder.base, referer = "/", sampleRate = 4400, stat = status.ok) {
+  const fileStream = createReadStream(`${baseDirectory}${decodeURI(requestUrl.pathname || "")}`);
   ((fStream, resp) => {
-    res.writeHead(stat, {
+    res.writeHead(stat, "", {
       Referer: referer,
       "Accept-Ranges": "bytes",
       "Transfer-Encoding": "chunked",
@@ -73,57 +75,68 @@ function parseRequestEnd(requestUrl, res, mime, directory = baseDirectory, refer
   })(fileStream, res);
 }
 
-module.exports = {
-  parseRequest: (req, res, isBaseDirectory = true) => {
-    const directory = isBaseDirectory ? baseDirectory : sharedDirectory;
-    const requestUrl = url.parse(req.url);
-    const pathname = decodeURI(requestUrl.pathname);
+/**
+ * @param {import("express-serve-static-core").Request<import("express-serve-static-core").ParamsDictionary, any, any, import("qs").ParsedQs, Record<string, any>>} req
+ * @param {import("express-serve-static-core").Response<any, Record<string, any>, number>} res
+ */
+export function parseRequest(req, res, isBaseDirectory = true) {
+  const dir = isBaseDirectory ? folder.base : folder.shared;
+  const requestUrl = isBaseDirectory ? parse(req.url) : parse(req.url);
+  let pathname = null;
+  if (requestUrl?.pathname) {
+    pathname = decodeURI(requestUrl.pathname);
     const ext = pathname.replace(/^.*(?=\.)/, "");
     const mime = mimetype[ext] || "text/html";
-    const referer = req.headers.referrer || req.headers.referer || "/";
+    const referer = (typeof req.headers.referrer === "string" ? req.headers.referrer : req.headers?.referrer?.join("")) || req.headers.referer || "/";
     if (mime === "audio/mpeg") {
-      mm.parseFile(`${directory}${pathname}`)
-        .then((metadata) => {
-          parseRequestEnd(requestUrl, res, mime, directory, referer, metadata.format.sampleRate);
-        })
-        .catch(() => {
-          parseRequestEnd(requestUrl, res, mime, directory, referer, null, status.notFound);
-        });
+      parseMusicFile(`${dir}${pathname}`)
+        .then((metadata) => parseRequestEnd(requestUrl, res, mime, dir, referer, metadata.format.sampleRate))
+        .catch(() => parseRequestEnd(requestUrl, res, mime, dir, referer, undefined, status.notFound));
     } else {
-      parseRequestEnd(requestUrl, res, mime, directory, referer);
+      parseRequestEnd(requestUrl, res, mime, dir, referer);
     }
-  },
-  parseRequestBB: (req, res) => {
-    const requestUrl = url.parse(`/public${decodeURI(req.url)}`);
-    const pathname = decodeURI(requestUrl.pathname);
-    const directory = pathname.replace(/^\/public(.*)\/.*?$/, "$1");
-    res.writeHead(status.ok, {
-      "Content-Type": "application/javascript",
-    });
-    const fileStream = fs.createReadStream(`${baseDirectory}${pathname.replace(/\.js$/, "")}`);
-    (function _foo(fStream, resp) {
-      let body = "";
-      fStream.on("data", (data) => {
-        body = body + data;
-      });
-      fStream.on("end", () => {
-        process.chdir(path.dirname(require.main.filename));
-        const result = blitz.parseBB(body, directory);
-        resp.end(`(async () => {
-try {
-await _loadfont('courier', 18, false, false, false);
-_endgraphics();
-await _changedir('${directory}');
-${result}
-} catch(err) {
-if(err && err.message) _errorlog(err, true);
+  }
 }
-${blitz.endProgram()}
-})();`);
-      });
-      fStream.on("error", (err) => {
-        resp.end();
-      });
-    })(fileStream, res);
-  },
-};
+
+// /**
+//  * @param {import("express-serve-static-core").Request<{}, any, any, import("qs").ParsedQs, Record<string, any>>} req
+//  * @param {import("express-serve-static-core").Response<any, Record<string, any>, number>} res
+//  */
+// export function parseRequestBB(req, res) {
+//   const requestUrl = parse(`/public${decodeURI(req.url)}`);
+//   let pathname = null;
+//   if (requestUrl?.pathname) {
+//     pathname = decodeURI(requestUrl.pathname);
+//     const dir = pathname.replace(/^\/public(.*)\/.*?$/, "$1");
+//     res.writeHead(status.ok, {
+//       "Content-Type": "application/javascript",
+//     });
+
+//     const fileStream = createReadStream(`${folder.base}${pathname.replace(/\.js$/, "")}`);
+//     (function _foo(fStream, resp) {
+//       let body = "";
+//       fStream.on("data", (data) => {
+//         body = body + data;
+//       });
+//       fStream.on("end", async () => {
+//         const file = await import(folder.base + pathname);
+//         process.chdir(dirname(file));
+//         const result = parseBB(body, dir).output;
+//         resp.end(`(async () => {
+// try {
+// await _loadfont('courier', 18, false, false, false);
+// _endgraphics();
+// await _changedir('${dir}');
+// ${result}
+// } catch(err) {
+// if(err && err.message) _errorlog(err, true);
+// }
+// ${endProgram()}
+// })();`);
+//       });
+//       fStream.on("error", (err) => {
+//         resp.end();
+//       });
+//     })(fileStream, res);
+//   }
+// }

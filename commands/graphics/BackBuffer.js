@@ -1,3 +1,3 @@
 function _backbuffer() {
-	return _graphicsBufferList['_back'];
+  return _graphicsBufferList["_back"];
 }

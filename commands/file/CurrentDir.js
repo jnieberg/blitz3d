@@ -1,4 +1,4 @@
-var _currentDirCached = '';
+var _currentDirCached = "";
 function _currentdir() {
-	return _currentDirCached;
+  return _currentDirCached;
 }

@@ -1,3 +1,3 @@
-function _setbuffer(buffer = _graphicsBuffer) {
-	_graphicsBuffer = buffer;
+function _setbuffer(buffer = _currentGraphicsBuffer) {
+  _currentGraphicsBuffer = buffer;
 }

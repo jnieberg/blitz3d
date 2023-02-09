@@ -1,0 +1,49 @@
+:root {
+  --comment: #888888;
+  --string: #ffff88;
+  --function: #88ff88;
+  --command: #88ccff;
+  --number: #cc88ff;
+  --statement: #ff88cc;
+  --property: #ffcc88;
+  --brackets: #4488cc;
+}
+
+.hl__cmt {
+  color: var(--comment);
+}
+
+.hl__str {
+  color: var(--string);
+  font-weight: bold;
+}
+
+.hl__fun {
+  color: var(--function);
+}
+
+.hl__cmd {
+  color: var(--command);
+}
+
+.hl__typ {
+  color: var(--command);
+  font-style: italic;
+}
+
+.hl__num {
+  color: var(--number);
+}
+
+.hl__brk {
+  color: var(--brackets);
+  font-weight: bold;
+}
+
+.hl__stm {
+  color: var(--statement);
+}
+
+.hl__prp {
+  color: var(--property);
+}

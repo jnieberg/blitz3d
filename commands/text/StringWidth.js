@@ -1,5 +1,5 @@
 function _stringwidth(string) {
-	if (_graphicsBuffer.context) {
-		return Math.round(_graphicsBuffer.context.measureText(string).width);
-	}
+  if (_currentGraphicsBuffer.context) {
+    return Math.round(_currentGraphicsBuffer.context.measureText(string).width);
+  }
 }

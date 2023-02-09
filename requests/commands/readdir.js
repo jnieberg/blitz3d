@@ -1,29 +1,30 @@
-const fs = require('fs');
-const path = require('path');
+import { readdir, statSync } from "fs";
+import { normalize, dirname, resolve } from "path";
 
-exports.fn = (res, query) => {
-	const folder = path.normalize(path.dirname(require.main.filename) + '/public/' + query.folder);
-	fs.readdir(folder, (err, files) => {
-		if (files) {
-			const result = [];
-			files.forEach(file => {
-				let type = 1;
-				try {
-					if (fs.statSync(folder + '/' + file).isDirectory()) {
-						type = 2;
-					}
-					result.push({
-						name: file,
-						type: type
-					});
-				} catch (err) { }
-			});
-			res.json({
-				folder: path.normalize(query.folder + '/'),
-				file: result,
-				position: 0
-			});
-		}
-		res.status(404).end('0');
-	});
-};
+export function fn(res, query) {
+  const folder = resolve("./" + query.folder);
+  readdir(folder, (err, files) => {
+    if (files) {
+      const result = [];
+      files.forEach((file) => {
+        let type = 1;
+        try {
+          if (statSync(folder + "/" + file).isDirectory()) {
+            type = 2;
+          }
+          result.push({
+            name: file,
+            type: type,
+          });
+        } catch (err) {}
+      });
+      res.json({
+        folder: normalize(query.folder + "/"),
+        file: result,
+        position: 0,
+      });
+    } else {
+      res.status(404).end("0");
+    }
+  });
+}
