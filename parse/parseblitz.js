@@ -5,6 +5,7 @@ import { folder } from "../requests/folder.js";
 import { findOpenBracket } from "../static/js/bracket.js";
 import { getFunctions } from "./getfunctions.js";
 import { getVariables } from "./getvariables.js";
+import { getGlobal } from "./getglobal.js";
 
 const stringReplacer = "~~~~~~";
 const stringReplacerRx = /~~~~~~/;
@@ -63,7 +64,9 @@ const findCommands = (/** @type {string} */ bb) => {
   const customFunctions = Array.from(bb.matchAll(/^Function ([a-z]\w*?\b)/gim))?.map((m) => m[1]) || [];
 
   /** @type {string[]} */
-  const commands = Object.keys(systemCommands).concat(customFunctions);
+  const commands = Object.keys(systemCommands)
+    .concat(customFunctions)
+    .sort((a, b) => (a < b ? 1 : -1));
   commands.forEach((systemCommandName) => {
     const cmdRx = new RegExp(`\\b${systemCommandName}\\b`, "gim"); //.replace(/\$/gm, "\\$")
     bb = bb.replace(cmdRx, `_${systemCommandName.toLowerCase()}`);
@@ -82,7 +85,11 @@ const setGlobalVariables = (/** @type {string} */ bb, /** @type {string} */ all 
 const setFunctionVariables = (/** @type {string} */ bb) => {
   // let functions = Array.from(bb.matchAll(/\bfunction\b([\w\W]*?)\bendfunction\b/gi)).map((fn) => setGlobalVariables(fn[1], bb));
   const functions = getFunctions(bb);
-  functions.map((fn) => fn.replace);
+  functions.map((fn) => {
+    const variables = getVariables(fn, getGlobal(bb));
+    console.log(variables);
+    return fn;
+  });
   return bb;
 };
 
@@ -201,19 +208,6 @@ const applySemicolons = (/** @type {string} */ bb) => {
   return bb.replace(/([^{}:\n])$/gim, "$1;");
 };
 
-/**
- * Helper variable to work with all the cripple variabes that are used.
- * @typedef Commands
- * @type {object}
- * @property {string} name
- * @property {string} path
- * @property {string} source
- */
-const writeCommands = (/** @type {string[]} */ commands) => {
-  const commandsString = `${commands.map((cmd) => systemCommands[cmd]?.source || "").join("\n")}`;
-  writeFileSync(`${folder.static}/js/_commands.js`, commandsString);
-};
-
 const initializeJS = (/** @type {string} */ bb) => {
   return `(async () => {
   try {
@@ -234,7 +228,7 @@ export const parseBB = (/** @type {string} */ bb, /** @type {boolean} */ isInclu
   bb = cleanup(bb);
   // bb = cleanup(bb);
   ({ bb, commands } = findCommands(bb));
-  bb = findCommands(bb).bb;
+  // bb = findCommands(bb).bb;
   bb = setFunctionVariables(bb);
   bb = setGlobalVariables(bb);
   bb = parseStatements(bb);
@@ -246,7 +240,7 @@ export const parseBB = (/** @type {string} */ bb, /** @type {boolean} */ isInclu
   bb = restoreStrings(bb);
   bb = initializeJS(bb);
 
-  writeCommands(commands);
+  // writeCommands(commands);
   return beautify(bb, { format: "js" });
 };
 

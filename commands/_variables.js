@@ -205,3 +205,193 @@ const _BYTE_MAX = 256;
 const _SHORT_MAX = 65536;
 const _FLOAT_MAX = 65536.246;
 const _INTEGER_MAX = 2147483648;
+
+var _eventHandlers = {};
+
+/**
+ * @typedef GraphicsBuffer
+ * @type {object}
+ * @property {HTMLCanvasElement} canvas
+ * @property {CanvasRenderingContext2D} context
+ * @property {string} id
+ * @property {boolean} locked
+ * @property {number} rotate
+ * @property {number} scaleX
+ * @property {number} scaleY
+ * @property {number} transform11
+ * @property {number} transform12
+ * @property {number} transform21
+ * @property {number} transform22
+ * @property {number} x
+ * @property {number} y
+ */
+/** @type {Object.<string, GraphicsBuffer>} */
+var _graphicsBufferList = {
+  _front: {
+    canvas: undefined,
+    context: undefined,
+    id: "",
+    locked: false,
+    rotate: 0,
+    scaleX: 0,
+    scaleY: 0,
+    transform11: 0,
+    transform12: 0,
+    transform21: 0,
+    transform22: 0,
+    x: 0,
+    y: 0,
+  },
+  _back: {
+    canvas: undefined,
+    context: undefined,
+    id: "",
+    locked: false,
+    rotate: 0,
+    scaleX: 0,
+    scaleY: 0,
+    transform11: 0,
+    transform12: 0,
+    transform21: 0,
+    transform22: 0,
+    x: 0,
+    y: 0,
+  },
+};
+
+/** @type {GraphicsBuffer} */
+var _currentGraphicsBuffer = _graphicsBufferList._front;
+
+/** @type {number} */
+var _graphicsDepth;
+var _graphicsMode;
+var _graphicsMidHandle = false;
+var _graphicsModeList = [
+  {},
+  {
+    width: 320,
+    height: 200,
+    depth: 32,
+  },
+  {
+    width: 320,
+    height: 240,
+    depth: 32,
+  },
+  {
+    width: 400,
+    height: 300,
+    depth: 32,
+  },
+  {
+    width: 512,
+    height: 384,
+    depth: 32,
+  },
+  {
+    width: 640,
+    height: 400,
+    depth: 32,
+  },
+  {
+    width: 640,
+    height: 480,
+    depth: 32,
+  },
+  {
+    width: 800,
+    height: 600,
+    depth: 32,
+  },
+  {
+    width: 1024,
+    height: 768,
+    depth: 32,
+  },
+  {
+    width: 1152,
+    height: 864,
+    depth: 32,
+  },
+  {
+    width: 1280,
+    height: 600,
+    depth: 32,
+  },
+  {
+    width: 1280,
+    height: 720,
+    depth: 32,
+  },
+  {
+    width: 1280,
+    height: 768,
+    depth: 32,
+  },
+  {
+    width: 1280,
+    height: 800,
+    depth: 32,
+  },
+  {
+    width: 1280,
+    height: 960,
+    depth: 32,
+  },
+  {
+    width: 1280,
+    height: 1024,
+    depth: 32,
+  },
+  {
+    width: 1360,
+    height: 768,
+    depth: 32,
+  },
+  {
+    width: 1366,
+    height: 768,
+    depth: 32,
+  },
+  {
+    width: 1400,
+    height: 1050,
+    depth: 32,
+  },
+  {
+    width: 1440,
+    height: 900,
+    depth: 32,
+  },
+  {
+    width: 1600,
+    height: 900,
+    depth: 32,
+  },
+  {
+    width: 1680,
+    height: 1050,
+    depth: 32,
+  },
+  {
+    width: 1920,
+    height: 1080,
+    depth: 32,
+  },
+];
+
+var _mouseHitTimes = [];
+var _mouseDownThis = null;
+var _mouseDownCheck = null;
+_addListener("mousedown", _mouseDownGetMouseDown, "mousedown");
+_addListener("mouseup", _mouseDownRemoveMouseDown, "mousedown");
+_addListener("mousedown", _mouseHitGetCode, "mousehit");
+
+var _setFontCurrent = {
+  family: "courier",
+  size: 13,
+  height: 17,
+  bold: false,
+  italic: false,
+  underline: false,
+};

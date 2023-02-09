@@ -1,12 +1,3 @@
-var _setFontCurrent = {
-  family: "courier",
-  size: 13,
-  height: 17,
-  bold: false,
-  italic: false,
-  underline: false,
-};
-
 /**
  * @param {{ family: string; size: number; height?: number; bold: boolean; italic: boolean; underline: boolean; }} font
  */

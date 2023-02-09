@@ -31,7 +31,7 @@
       const normalize = (bb) => bb.replace(/  |\t/gim, "  ");
       const $bbCode = document.querySelector("#blitzInput");
       const $bbCodeRich = document.querySelector("#blitzInputRich");
-      const bbStored = localStorage.getItem("blitz3d-source");
+      const bbStored = localStorage.getItem("blitz3d-source") || "";
       $bbCode.innerText = normalize(bbStored);
       let onInputTimer = 0;
 

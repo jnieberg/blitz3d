@@ -1,5 +1,5 @@
 import express from "express";
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import ejs from "ejs";
 import { parseBB } from "./parse/parseblitz.js";
 import { parseRequest } from "./requests/parseRequest.js";
@@ -8,6 +8,7 @@ import { highlight } from "./static/js/highlight.js";
 import { folder } from "./requests/folder.js";
 import { getRequest } from "./requests/getRequest.js";
 import { postRequest } from "./requests/postRequest.js";
+import { systemCommands } from "./commands.js";
 
 const portDefault = 3001;
 const port = process.env.PORT || portDefault;
@@ -30,9 +31,18 @@ var color = {
 };
 var app = express();
 
+const writeCommands = () => {
+  const commands = Object.keys(systemCommands).sort((a, b) => (a < b ? 1 : -1));
+  const commandsString = `${commands.map((cmd) => systemCommands[cmd]?.source || "").join("\n")}`;
+  writeFileSync(`${folder.static}/js/_commands.js`, commandsString);
+};
+
 const server = app
   .use(express.urlencoded({ extended: true }))
-  // .use(express.json())
+  .get("/static/js/_commands.js", (req, res) => {
+    writeCommands();
+    parseRequest(req, res);
+  })
   .get("/static(/css/*.css|/images/*.png|/js/*.js|/fonts/*.fon)", (req, res) => {
     parseRequest(req, res);
   })
