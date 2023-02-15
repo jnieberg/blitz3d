@@ -4,9 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <meta
+      name="description"
+      content="Welcome to Blitz Basic - probably the most powerful BASIC language in the Universe. You are in safe hands as Blitz was written by gamers for gamers who have an impressive track record in this field. Within the Blitz environment you have the power of your PC at your fingertips making video game creation fun and easy - The only limit is your imagination and creative energy."
+    />
     <style id="blitzFonts"></style>
     <link rel="stylesheet" type="text/css" href="/static/css/blitz3d.css" />
     <link rel="stylesheet" type="text/css" href="/static/css/highlight.css" />
+    <script src="/static/js/howler.core.js"></script>
+    <script src="/static/js/howler.spatial.js"></script>
     <script src="/static/js/decode.js"></script>
     <title>Blitz3D</title>
   </head>
@@ -18,6 +24,7 @@
     <div id="workingspace" onclick="window.location.reload()"></div>
     <canvas id="blitz" <%if(!file) {%>onclick="getBB(document.querySelector('#blitzInput').innerText)"<%}%>></canvas>
     <canvas id="blitzBack"></canvas>
+    <div id="gamma"></div>
     <pre class="debug"></pre>
     <script src="/static/js/_commands.js"></script>
     <%if(!file) {%>
@@ -28,6 +35,7 @@
       </pre>
     </div>
     <script>
+      let started = false;
       const normalize = (bb) => bb.replace(/  |\t/gim, "  ");
       const $bbCode = document.querySelector("#blitzInput");
       const $bbCodeRich = document.querySelector("#blitzInputRich");
@@ -38,6 +46,7 @@
       const head = document.getElementsByTagName("head")[0];
       const scriptTag = document.createElement("script");
       scriptTag.id = "output";
+      scriptTag.type = "text/javascript";
       head.appendChild(scriptTag);
 
       const getHighlight = (bb) => {
@@ -59,38 +68,42 @@
       };
 
       const getBB = (bb) => {
-        document.body.classList.add("started");
-        // $bbCodeRich.innerHTML = normalize(bb);
+        if (!started) {
+          document.body.classList.add("started");
+          started = true;
+          // $bbCodeRich.innerHTML = normalize(bb);
 
-        localStorage.setItem("blitz3d-source", bb);
-        if (onInputTimer > 0) {
-          clearTimeout(onInputTimer);
-          onInputTimer = 0;
+          localStorage.setItem("blitz3d-source", bb);
+          if (onInputTimer > 0) {
+            clearTimeout(onInputTimer);
+            onInputTimer = 0;
+          }
+          onInputTimer = setTimeout(() => {
+            onInputTimer = 0;
+            bb = localStorage.getItem("blitz3d-source");
+
+            fetch("/_output.bb.js", {
+              method: "POST",
+              body: bb,
+            })
+              .then((data) => data.text())
+              .then((outputString) => {
+                const output = outputString;
+                head.removeChild(scriptTag);
+                scriptTag.innerHTML = output;
+                head.appendChild(scriptTag);
+                console.log(output);
+              });
+          }, 300);
         }
-        onInputTimer = setTimeout(() => {
-          onInputTimer = 0;
-          bb = localStorage.getItem("blitz3d-source");
-
-          fetch("/_output.bb.js", {
-            method: "POST",
-            body: bb,
-          })
-            .then((data) => data.text())
-            .then((outputString) => {
-              const output = outputString;
-              head.removeChild(scriptTag);
-              scriptTag.innerHTML = output;
-              head.appendChild(scriptTag);
-            });
-        }, 300);
       };
       getHighlight(bbStored);
 
+      // TODO: Make separate JS for these
       $bbCode.addEventListener("paste", function (e) {
         e.preventDefault();
         var text = (e.originalEvent || e).clipboardData.getData("text/plain");
         document.execCommand("insertHTML", false, normalize(text));
-        console.log(normalize(text));
       });
       $bbCode.addEventListener("keydown", function (event) {
         if (event.key === "Enter") {

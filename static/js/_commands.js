@@ -224,6 +224,7 @@ var _eventHandlers = {};
  * @property {number} transform22
  * @property {number} x
  * @property {number} y
+ * @property {number} mode
  */
 /** @type {Object.<string, GraphicsBuffer>} */
 var _graphicsBufferList = {
@@ -241,6 +242,7 @@ var _graphicsBufferList = {
     transform22: 0,
     x: 0,
     y: 0,
+    mode: -1,
   },
   _back: {
     canvas: undefined,
@@ -256,6 +258,7 @@ var _graphicsBufferList = {
     transform22: 0,
     x: 0,
     y: 0,
+    mode: -1,
   },
 };
 
@@ -386,15 +389,25 @@ var _mouseDownCheck = null;
 _addListener("mousedown", _mouseDownGetMouseDown, "mousedown");
 _addListener("mouseup", _mouseDownRemoveMouseDown, "mousedown");
 _addListener("mousedown", _mouseHitGetCode, "mousehit");
+_addListener("keydown", _keyDownGetKeyDown, "keydown");
+_addListener("keyup", _keyDownRemoveKeyDown, "keydown");
 
 var _setFontCurrent = {
   family: "courier",
-  size: 13,
-  height: 17,
+  size: 80 / 6,
+  height: 80 / 6,
   bold: false,
   italic: false,
   underline: false,
 };
+
+var _currentDirCached = "";
+var _readDirList = {};
+var _dataList = [];
+
+var _setGammaDestRed = 0;
+var _setGammaDestGreen = 0;
+var _setGammaDestBlue = 0;
 
 var _backupScreenImg = undefined;
 function _saveScreen(buffer = _currentGraphicsBuffer) {
@@ -494,17 +507,15 @@ function _string2int(numString) {
 var _asyncTimer = _millisecs();
 function _async() {
   const timer = _millisecs();
-  if (timer - _asyncTimer >= 1000 / 60) {
-    return new Promise((resolve, reject) => {
-      _asyncTimer = timer;
-      _flipSync = true;
-      setTimeout(() => {
-        resolve(1);
-      });
-    });
-  } else {
-    return 1;
-  }
+  //if (timer - _asyncTimer >= 1000 / 60) {
+  return new Promise((resolve, reject) => {
+    _asyncTimer = timer;
+    _flipSync = true;
+    setTimeout(() => resolve(1));
+  });
+  //} else {
+  //  return 1;
+  //}
 }
 
 function _getCommand(command, arguments) {
@@ -899,6 +910,8 @@ function _upper(string) {
 }
 //TO BE DONE
 function _updategamma() {
+  // @ts-ignore
+  document.querySelector("#gamma").style.backgroundColor = `rgb(${_setGammaDestRed},${_setGammaDestGreen},${_setGammaDestBlue})`;
   // const imageData = _currentGraphicsBuffer.context.getImageData(0, 0, _currentGraphicsBuffer.canvas.width, _currentGraphicsBuffer.canvas.height);
   // const data = imageData.data;
   // for (var i = 0; i < data.length; i += 4) {
@@ -1041,7 +1054,12 @@ function _sgn(number) {
 	return Math.sign(number);
 }
 //TO BE DONE
-function _setgamma(r, g, b, r2, g2, b2) { }
+function _setgamma(r, g, b, r2, g2, b2) {
+  _setGammaDestRed = r2 - r;
+  _setGammaDestGreen = g2 - g;
+  _setGammaDestBlue = b2 - b;
+}
+
 /**
  * @param {{ family: string; size: number; height?: number; bold: boolean; italic: boolean; underline: boolean; }} font
  */
@@ -1253,14 +1271,13 @@ async function _readfile(filename) {
   };
 }
 
-var _readDirList = {};
-
 async function _readdir(directory) {
-	let path = _normalizeFile(directory);
-	const dir = await _postCommand('readdir', { folder: path });
-	_readDirList[dir.folder] = dir;
-	return _readDirList[dir.folder];
+  let path = _normalizeFile(directory);
+  const dir = await _postCommand("readdir", { folder: path });
+  _readDirList[dir.folder] = dir;
+  return _readDirList[dir.folder];
 }
+
 function _readbytes(bank, stream, offset, count) { // from stream to bank
 	let string = stream.data.substring(stream.position, stream.position + count);
 	string = string.substring(offset, offset + bank.data.length);
@@ -1302,7 +1319,7 @@ function _rset(string, length) {
 	}
 	return String(string).padStart(length);
 }
-function _print(/** @type {_Float | boolean | number | string} */ txt = 0 || "", /** @type {boolean} */ fix) {
+function _print1(/** @type {_Float | boolean | number | string} */ txt = 0 || "", /** @type {boolean} */ fix = false) {
   if (_currentGraphicsBuffer.context) {
     if (txt instanceof _Float) {
       txt = txt.float;
@@ -1311,7 +1328,7 @@ function _print(/** @type {_Float | boolean | number | string} */ txt = 0 || "",
         txt = _roundFloat(txt);
       }
     }
-    if (_printY + _setFontCurrent.height > _currentGraphicsBuffer.canvas.height) {
+    if (_printY + _setFontCurrent.height * 0.5 > _currentGraphicsBuffer.canvas.height) {
       _saveScreen();
       _loadScreen(0, -_setFontCurrent.height);
       _printY = _printY - _setFontCurrent.height;
@@ -1325,6 +1342,9 @@ function _print(/** @type {_Float | boolean | number | string} */ txt = 0 || "",
     }
     _writeX = 0;
   }
+}
+function _print(/** @type {_Float | boolean | number | string} */ txt = 0 || "") {
+  _print1(txt);
 }
 
 function _pokeshort(bank, offset, short) {
@@ -1650,7 +1670,7 @@ async function _loadimage(filename) {
     };
     img.onerror = () => {
       console.warn(`LoadImage: Image "${filename}" not found.`);
-      reject();
+      resolve();
     };
   });
 }
@@ -1797,20 +1817,18 @@ function _keyhit(code) {
 
 var _keyDownList = {};
 function _keyDownGetKeyDown(event) {
-	//event.preventDefault();
-	const key = _scancode.indexOf(event.code) === -1 ? 0 : _scancode.indexOf(event.code);
-	_keyDownList[key] = 1;
+  //event.preventDefault();
+  const key = _scancode.indexOf(event.code) === -1 ? 0 : _scancode.indexOf(event.code);
+  _keyDownList[key] = 1;
 }
 function _keyDownRemoveKeyDown(event) {
-	//event.preventDefault();
-	const key = _scancode.indexOf(event.code) === -1 ? 0 : _scancode.indexOf(event.code);
-	delete _keyDownList[key];
+  //event.preventDefault();
+  const key = _scancode.indexOf(event.code) === -1 ? 0 : _scancode.indexOf(event.code);
+  delete _keyDownList[key];
 }
-_addListener('keydown', _keyDownGetKeyDown, 'keydown');
-_addListener('keyup', _keyDownRemoveKeyDown, 'keydown');
 
 function _keydown(code) {
-	return _keyDownList[code] || 0;
+  return _keyDownList[code] || 0;
 }
 
 function _int(str) {
@@ -1840,7 +1858,7 @@ var _inputTextCursorTimeout = undefined;
 async function _input(input) {
   _inputText = "";
   _saveScreen();
-  _print(`${input}`, true);
+  _print1(`${input}`, true);
   function blink() {
     _rect(
       _printX + _currentGraphicsBuffer.context.measureText(input + _inputText).width + 1,
@@ -1876,8 +1894,8 @@ async function _input(input) {
         clearInterval(_inputTextCursorInterval);
         clearInterval(_inputTextCursorTimeout);
         _loadScreen();
-        _print(`${input}${_inputText}`, true);
-        resolve(_inputText);
+        _print1(`${input}${_inputText}`, true);
+        resolve(Number(_inputText) || _inputText);
         _printY = _printY + _setFontCurrent.height;
       });
     } else if (key.length === 1) {
@@ -1891,7 +1909,7 @@ async function _input(input) {
       _setFontCurrent.height,
       true
     );
-    _print(`${input}${_inputText}`, true);
+    _print1(`${input}${_inputText}`, true);
   }
 }
 
@@ -2067,6 +2085,7 @@ function _graphicsCreate(width, height, id, mode = -1) {
       transform22: 0,
       x: 0,
       y: 0,
+      mode: -1,
     };
     if (id === "_front") {
       buffer.canvas = document.querySelector("#blitz");
@@ -2075,7 +2094,7 @@ function _graphicsCreate(width, height, id, mode = -1) {
     } else {
       buffer.canvas = document.createElement("canvas");
     }
-    buffer.context = buffer.canvas.getContext("2d");
+    buffer.context = buffer.canvas.getContext("2d", { willReadFrequently: true });
     buffer.id = id;
   }
   buffer.locked = false;
@@ -2106,10 +2125,13 @@ function _graphicsCreate(width, height, id, mode = -1) {
       document.querySelector("#blitz").classList.remove("full");
     }
   }
+  // buffer.context.filter =
+  //   "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxmaWx0ZXIgaWQ9ImZpbHRlciIgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIj48ZmVDb21wb25lbnRUcmFuc2Zlcj48ZmVGdW5jUiB0eXBlPSJpZGVudGl0eSIvPjxmZUZ1bmNHIHR5cGU9ImlkZW50aXR5Ii8+PGZlRnVuY0IgdHlwZT0iaWRlbnRpdHkiLz48ZmVGdW5jQSB0eXBlPSJkaXNjcmV0ZSIgdGFibGVWYWx1ZXM9IjAgMSIvPjwvZmVDb21wb25lbnRUcmFuc2Zlcj48L2ZpbHRlcj48L3N2Zz4=#filter)"; // SLOOOOOW
   buffer.context.textBaseline = "top";
   buffer.context.textAlign = "left";
   buffer.context.lineWidth = 1;
   buffer.context.clearRect(0, 0, width, height);
+  // buffer.context.translate(0.5, 0.5);
   _setfont(_setFontCurrent, buffer);
   return buffer;
 }
@@ -2269,10 +2291,17 @@ var _flipSync = true;
 function _flip() {
   if (_flipSync) {
     _flipSync = false;
-    const /** @type {HTMLCanvasElement} */ back = document.querySelector("#blitzBack");
-    const /** @type {HTMLCanvasElement} */ front = document.querySelector("#blitz");
-    _backbuffer().context = front.getContext("2d");
-    _frontbuffer().context = back.getContext("2d");
+    const back = _backbuffer();
+    const front = _frontbuffer();
+    const temp = _graphicsCreate(front.canvas.width, front.canvas.height, "_tempflip");
+
+    temp.context.drawImage(front.canvas, 0, 0);
+
+    front.context.clearRect(0, 0, front.canvas.width, front.canvas.height);
+    front.context.drawImage(back.canvas, 0, 0);
+
+    back.context.clearRect(0, 0, back.canvas.width, back.canvas.height);
+    back.context.drawImage(temp.canvas, 0, 0);
   }
 }
 
@@ -2375,7 +2404,7 @@ const _dim = (/** @type {number[]} */ ...dimensions) => {
   const /** @type {function} */ newArray = (/** @type {string | any[]} */ dimensions, /** @type {any[]} */ array = []) => {
       let arr;
       let rest;
-      if (dimensions.length > 0) {
+      if (dimensions.length >= 0) {
         const len = dimensions[0];
         rest = dimensions.slice(1);
         arr = [];
@@ -2471,11 +2500,20 @@ function _errorlog(err, log = false) {
   if (log) console.error(err);
   try {
     const error = err.replace(/[\t ]+/gm, " ");
-    const message = error.replace(/^.*:(.*?)\n[\w\W]*$/g, "$1");
+    const message = error.replace(/^.*: *([\w\W]*?) *\n? *\bat\b[\w\W]*$/g, "$1");
     const file = error.replace(/^.* +at +https?:\/\/.*\/(.*?)\.js:.*$/g, "$1").toUpperCase();
-    const line = error.replace(/^[\w\W]* at .*:(.*?):[^:]*?$/g, "$1");
+    const line = error.replace(/^.*: *([\w\W]*?) *\n? *\bat\b .*?:(\d+?):[\w\W]*$/g, "$2");
     _debuglog(`${message} at line ${line}`, "#f57");
   } catch (e) {}
+}
+
+var _dataList = [];
+/**
+ * @param {string} label
+ * @param {any[]} data
+ */
+function _data(label, ...data) {
+  _dataList.push(`__${label}`, ...data);
 }
 
 var _dataList = [];
@@ -2494,7 +2532,6 @@ function _currenttime() {
 	const second = `0${date.getSeconds()}`.slice(-2);
 	return `${hour}:${minute}:${second}`;
 }
-var _currentDirCached = "";
 function _currentdir() {
   return _currentDirCached;
 }

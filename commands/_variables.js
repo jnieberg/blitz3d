@@ -224,6 +224,7 @@ var _eventHandlers = {};
  * @property {number} transform22
  * @property {number} x
  * @property {number} y
+ * @property {number} mode
  */
 /** @type {Object.<string, GraphicsBuffer>} */
 var _graphicsBufferList = {
@@ -241,6 +242,7 @@ var _graphicsBufferList = {
     transform22: 0,
     x: 0,
     y: 0,
+    mode: -1,
   },
   _back: {
     canvas: undefined,
@@ -256,6 +258,7 @@ var _graphicsBufferList = {
     transform22: 0,
     x: 0,
     y: 0,
+    mode: -1,
   },
 };
 
@@ -386,12 +389,22 @@ var _mouseDownCheck = null;
 _addListener("mousedown", _mouseDownGetMouseDown, "mousedown");
 _addListener("mouseup", _mouseDownRemoveMouseDown, "mousedown");
 _addListener("mousedown", _mouseHitGetCode, "mousehit");
+_addListener("keydown", _keyDownGetKeyDown, "keydown");
+_addListener("keyup", _keyDownRemoveKeyDown, "keydown");
 
 var _setFontCurrent = {
   family: "courier",
-  size: 13,
-  height: 17,
+  size: 80 / 6,
+  height: 80 / 6,
   bold: false,
   italic: false,
   underline: false,
 };
+
+var _currentDirCached = "";
+var _readDirList = {};
+var _dataList = [];
+
+var _setGammaDestRed = 0;
+var _setGammaDestGreen = 0;
+var _setGammaDestBlue = 0;

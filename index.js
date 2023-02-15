@@ -43,7 +43,7 @@ const server = app
     writeCommands();
     parseRequest(req, res);
   })
-  .get("/static(/css/*.css|/images/*.png|/js/*.js|/fonts/*.fon)", (req, res) => {
+  .get("/static/*", (req, res) => {
     parseRequest(req, res);
   })
   .get("*.(css|jpg|gif|png|bmp|ogv|wav|mp3|eot|ttf|svg|woff|woff3|html|htm)", (req, res) => {
@@ -72,11 +72,13 @@ const server = app
     });
   })
   .get(["/*.bb.js"], (req, res) => {
-    const file = req.params["0"] || "";
+    const fileFull = req.params["0"] || "";
+    const file = fileFull.replace(/^(.*)\/(.*?)$/, "$2");
+    const currentFolder = fileFull.replace(/^(.*)\/(.*?)$/, "$1");
     const isInclude = req.query.include ? true : false;
     const bb = file && readFileSync(`${file}.bb`).toString();
-    res.writeHead(200, { "Content-Type": "text/html" });
-    res.end(parseBB(decode(bb), isInclude));
+    res.writeHead(200, { "Content-Type": "text/jsplusgoto" });
+    res.end(parseBB(decode(bb), isInclude, currentFolder));
   })
   .get(["/", "/*.bb"], (req, res) => {
     const fileFull = req.params["0"] || "";
@@ -84,12 +86,11 @@ const server = app
     const currentFolder = fileFull.replace(/^(.*)\/(.*?)$/, "$1");
     process.chdir(`${folder.shared}/${currentFolder}`);
     let html = readFileSync(`${folder.static}/html/index.html`).toString();
-    html = ejs.render(html, { file });
+    html = ejs.render(html, { file: fileFull });
     res.writeHead(200, { "Content-Type": "text/html" });
     res.end(html);
   })
   .listen(port, () => {
-    console.clear();
     return console.log(`${color.fgGreen}[SYSTEM] - Started. Listening to http://localhost:${port}${color.reset}`);
   });
 

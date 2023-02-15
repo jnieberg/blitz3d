@@ -96,17 +96,15 @@ function _string2int(numString) {
 var _asyncTimer = _millisecs();
 function _async() {
   const timer = _millisecs();
-  if (timer - _asyncTimer >= 1000 / 60) {
-    return new Promise((resolve, reject) => {
-      _asyncTimer = timer;
-      _flipSync = true;
-      setTimeout(() => {
-        resolve(1);
-      });
-    });
-  } else {
-    return 1;
-  }
+  //if (timer - _asyncTimer >= 1000 / 60) {
+  return new Promise((resolve, reject) => {
+    _asyncTimer = timer;
+    _flipSync = true;
+    setTimeout(() => resolve(1));
+  });
+  //} else {
+  //  return 1;
+  //}
 }
 
 function _getCommand(command, arguments) {

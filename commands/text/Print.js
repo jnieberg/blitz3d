@@ -1,4 +1,4 @@
-function _print(/** @type {_Float | boolean | number | string} */ txt = 0 || "", /** @type {boolean} */ fix) {
+function _print1(/** @type {_Float | boolean | number | string} */ txt = 0 || "", /** @type {boolean} */ fix = false) {
   if (_currentGraphicsBuffer.context) {
     if (txt instanceof _Float) {
       txt = txt.float;
@@ -7,7 +7,7 @@ function _print(/** @type {_Float | boolean | number | string} */ txt = 0 || "",
         txt = _roundFloat(txt);
       }
     }
-    if (_printY + _setFontCurrent.height > _currentGraphicsBuffer.canvas.height) {
+    if (_printY + _setFontCurrent.height * 0.5 > _currentGraphicsBuffer.canvas.height) {
       _saveScreen();
       _loadScreen(0, -_setFontCurrent.height);
       _printY = _printY - _setFontCurrent.height;
@@ -21,4 +21,7 @@ function _print(/** @type {_Float | boolean | number | string} */ txt = 0 || "",
     }
     _writeX = 0;
   }
+}
+function _print(/** @type {_Float | boolean | number | string} */ txt = 0 || "") {
+  _print1(txt);
 }

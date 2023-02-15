@@ -18,9 +18,7 @@ const setFunctionProps = (/** @type {string} */ bb) => {
   Array.from(bb.matchAll(/(?<=\bfunction +[a-z]\w*?[$%#]? *)\((.*?)\)([\w\W]*?)(?=end +function)/gi) || []).forEach((fn) => {
     const propsRxString = fn[1]
       .split(/ *, */g)
-      .map((prop) => {
-        return prop.match(/([a-z]\w*?\b[$%#]?)/gm) || "";
-      })
+      .map((prop) => prop.match(/(^[a-z]\w*?\b[$%#]?)/gm) || "")
       .join("|");
     if (propsRxString) {
       const propsRx = new RegExp(`\\b(${propsRxString})\\b`, "gim");

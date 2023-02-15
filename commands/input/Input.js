@@ -4,7 +4,7 @@ var _inputTextCursorTimeout = undefined;
 async function _input(input) {
   _inputText = "";
   _saveScreen();
-  _print(`${input}`, true);
+  _print1(`${input}`, true);
   function blink() {
     _rect(
       _printX + _currentGraphicsBuffer.context.measureText(input + _inputText).width + 1,
@@ -40,8 +40,8 @@ async function _input(input) {
         clearInterval(_inputTextCursorInterval);
         clearInterval(_inputTextCursorTimeout);
         _loadScreen();
-        _print(`${input}${_inputText}`, true);
-        resolve(_inputText);
+        _print1(`${input}${_inputText}`, true);
+        resolve(Number(_inputText) || _inputText);
         _printY = _printY + _setFontCurrent.height;
       });
     } else if (key.length === 1) {
@@ -55,6 +55,6 @@ async function _input(input) {
       _setFontCurrent.height,
       true
     );
-    _print(`${input}${_inputText}`, true);
+    _print1(`${input}${_inputText}`, true);
   }
 }

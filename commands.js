@@ -2,7 +2,10 @@ import { lstatSync, readdirSync, readFileSync } from "fs";
 import { join } from "path";
 import { folder } from "./requests/folder.js";
 
-const traverseDir = (/** @type {string} */ dir, /** @type {Object.<string, { name: string; path: string; source: String; }>} */ files = {}) => {
+const traverseDir = (
+  /** @type {string} */ dir,
+  /** @type {Object.<string, { name: string; path: string; source: string; props: string[]; }>} */ files = {}
+) => {
   readdirSync(dir).forEach((file) => {
     const name = file.replace(/\..*?$/g, "");
     const fullPath = join(dir, file);
@@ -10,11 +13,12 @@ const traverseDir = (/** @type {string} */ dir, /** @type {Object.<string, { nam
       files = { ...files, ...traverseDir(fullPath) };
     } else {
       const source = readFileSync(fullPath).toString();
-      files[name] = { name, path: fullPath, source };
+      const props = (source.match(/(?<=\bfunction\b *.*?\()(.*?)(?=\) *{\n)/i) || [])[0]?.split(/ *, */g) || [];
+      files[name] = { name, path: fullPath, source, props };
     }
   });
   return files;
 };
 
-/** @type {Object.<string, { name: string; path: string; source: String; }>} */
+/** @type {Object.<string, { name: string; path: string; source: string; props: string[]; }>} */
 export let systemCommands = traverseDir(folder.commands);

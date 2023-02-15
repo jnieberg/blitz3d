@@ -24,9 +24,9 @@ function _errorlog(err, log = false) {
   if (log) console.error(err);
   try {
     const error = err.replace(/[\t ]+/gm, " ");
-    const message = error.replace(/^.*:(.*?)\n[\w\W]*$/g, "$1");
+    const message = error.replace(/^.*: *([\w\W]*?) *\n? *\bat\b[\w\W]*$/g, "$1");
     const file = error.replace(/^.* +at +https?:\/\/.*\/(.*?)\.js:.*$/g, "$1").toUpperCase();
-    const line = error.replace(/^[\w\W]* at .*:(.*?):[^:]*?$/g, "$1");
+    const line = error.replace(/^.*: *([\w\W]*?) *\n? *\bat\b .*?:(\d+?):[\w\W]*$/g, "$2");
     _debuglog(`${message} at line ${line}`, "#f57");
   } catch (e) {}
 }

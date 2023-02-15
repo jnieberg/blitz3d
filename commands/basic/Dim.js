@@ -2,7 +2,7 @@ const _dim = (/** @type {number[]} */ ...dimensions) => {
   const /** @type {function} */ newArray = (/** @type {string | any[]} */ dimensions, /** @type {any[]} */ array = []) => {
       let arr;
       let rest;
-      if (dimensions.length > 0) {
+      if (dimensions.length >= 0) {
         const len = dimensions[0];
         rest = dimensions.slice(1);
         arr = [];

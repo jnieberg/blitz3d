@@ -47,6 +47,7 @@ function _graphicsCreate(width, height, id, mode = -1) {
       transform22: 0,
       x: 0,
       y: 0,
+      mode: -1,
     };
     if (id === "_front") {
       buffer.canvas = document.querySelector("#blitz");
@@ -55,7 +56,7 @@ function _graphicsCreate(width, height, id, mode = -1) {
     } else {
       buffer.canvas = document.createElement("canvas");
     }
-    buffer.context = buffer.canvas.getContext("2d");
+    buffer.context = buffer.canvas.getContext("2d", { willReadFrequently: true });
     buffer.id = id;
   }
   buffer.locked = false;
@@ -86,10 +87,13 @@ function _graphicsCreate(width, height, id, mode = -1) {
       document.querySelector("#blitz").classList.remove("full");
     }
   }
+  // buffer.context.filter =
+  //   "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxmaWx0ZXIgaWQ9ImZpbHRlciIgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIj48ZmVDb21wb25lbnRUcmFuc2Zlcj48ZmVGdW5jUiB0eXBlPSJpZGVudGl0eSIvPjxmZUZ1bmNHIHR5cGU9ImlkZW50aXR5Ii8+PGZlRnVuY0IgdHlwZT0iaWRlbnRpdHkiLz48ZmVGdW5jQSB0eXBlPSJkaXNjcmV0ZSIgdGFibGVWYWx1ZXM9IjAgMSIvPjwvZmVDb21wb25lbnRUcmFuc2Zlcj48L2ZpbHRlcj48L3N2Zz4=#filter)"; // SLOOOOOW
   buffer.context.textBaseline = "top";
   buffer.context.textAlign = "left";
   buffer.context.lineWidth = 1;
   buffer.context.clearRect(0, 0, width, height);
+  // buffer.context.translate(0.5, 0.5);
   _setfont(_setFontCurrent, buffer);
   return buffer;
 }

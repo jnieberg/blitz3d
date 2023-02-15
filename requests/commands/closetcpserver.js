@@ -1,9 +1,9 @@
-const { netServer } = require('./createtcpserver');
+const { _netserver } = require("./createtcpserver");
 
 exports.fn = (res, query) => {
-	if (netServer[query]) {
-		netServer[query].server.close();
-		res.end('1');
-	}
-	res.status(404).end('0');
-}
+  if (_netserver[query]) {
+    _netserver[query].server.close();
+    res.end("1");
+  }
+  res.status(404).end("0");
+};

@@ -20,6 +20,7 @@
     "forever": "^2.0.0",
     "fs": "0.0.1-security",
     "html-entities": "^2.3.3",
+    "jest": "^29.4.2",
     "jimp": "^0.6.4",
     "js-beautify": "^1.10.0",
     "mkdirp": "^0.5.1",

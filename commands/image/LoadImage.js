@@ -20,7 +20,7 @@ async function _loadimage(filename) {
     };
     img.onerror = () => {
       console.warn(`LoadImage: Image "${filename}" not found.`);
-      reject();
+      resolve();
     };
   });
 }
