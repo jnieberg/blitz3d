@@ -1,4 +1,8 @@
+/**
+ * @param {GraphicsBuffer[]} image
+ */
 function _tileimage(image, x = 0, y = 0, frame = 0, buffer = _currentGraphicsBuffer) {
+  frame = Math.floor(frame);
   if (image && image[frame] && image[frame].context && buffer.context && !buffer.locked) {
     const pattern = buffer.context.createPattern(image[frame].canvas, "repeat");
     buffer.context.translate(x + _originX - image[frame].x, y + _originY - image[frame].y);

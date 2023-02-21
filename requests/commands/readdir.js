@@ -1,5 +1,5 @@
 import { readdir, statSync } from "fs";
-import { normalize, dirname, resolve } from "path";
+import { normalize, resolve } from "path";
 
 export function fn(res, query) {
   const folder = resolve("./" + query.folder);

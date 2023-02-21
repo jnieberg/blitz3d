@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="text/javascript">
+      //<![CDATA[
+      var vid, ctx;
+      function play() {
+        console.log("play");
+        vid.play();
+        setInterval(function () {
+          ctx.drawImage(vid, 0, 0);
+        }, 60);
+      }
+      function init() {
+        var can = document.getElementById("canvas1");
+        ctx = can.getContext("2d");
+        vid = document.createElement("video");
+        vid.src = "http://techslides.com/demos/sample-videos/small.ogv";
+        vid.autoplay = false;
+        vid.loop = true;
+        vid.addEventListener("canplaythrough", play, false);
+      }
+      //]]>
+    </script>
+  </head>
+  <body onLoad="init();">
+    <canvas id="canvas1" width="500" height="500"></canvas>
+  </body>
+</html>

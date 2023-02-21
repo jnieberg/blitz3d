@@ -34,27 +34,28 @@ var app = express();
 const writeCommands = () => {
   const commands = Object.keys(systemCommands).sort((a, b) => (a < b ? 1 : -1));
   const commandsString = `${commands.map((cmd) => systemCommands[cmd]?.source || "").join("\n")}`;
-  writeFileSync(`${folder.static}/js/_commands.js`, commandsString);
+  writeFileSync(`${folder.static}/js/_commands.jsb`, commandsString);
 };
 
 const server = app
   .use(express.urlencoded({ extended: true }))
-  .get("/static/js/_commands.js", (req, res) => {
+  .get("/static/js/_commands.jsb", (req, res) => {
     writeCommands();
     parseRequest(req, res);
   })
   .get("/static/*", (req, res) => {
     parseRequest(req, res);
   })
-  .get("*.(css|jpg|gif|png|bmp|ogv|wav|mp3|eot|ttf|svg|woff|woff3|html|htm)", (req, res) => {
+  .get("*.(css|jpg|gif|png|bmp|ogv|wav|mp3|eot|ttf|svg|mp4|webm|woff|woff3|html|htm)", (req, res) => {
     parseRequest(req, res, false);
   })
   .post("/_output.bb.js", (req, res) => {
     let bb = "";
     req.on("data", (data) => (bb += data));
     req.on("end", () => {
-      res.writeHead(200, { "Content-Type": "text/javascript" });
-      res.end(parseBB(decode(bb)));
+      bb = decode(bb);
+      res.writeHead(status.ok, { "Content-Type": "text/javascript" });
+      res.end(parseBB({ bb }));
     });
   })
   .get("/_*", (req, res) => {
@@ -67,27 +68,24 @@ const server = app
     let bb = "";
     req.on("data", (data) => (bb += data));
     req.on("end", () => {
-      res.writeHead(200, { "Content-Type": "text/plain" });
+      res.writeHead(status.ok, { "Content-Type": "text/plain" });
       res.end(highlight(bb));
     });
   })
   .get(["/*.bb.js"], (req, res) => {
     const fileFull = req.params["0"] || "";
-    const file = fileFull.replace(/^(.*)\/(.*?)$/, "$2");
-    const currentFolder = fileFull.replace(/^(.*)\/(.*?)$/, "$1");
-    const isInclude = req.query.include ? true : false;
+    const file = fileFull.replace(/^(.*?)([^/]*?)$/, "$2");
     const bb = file && readFileSync(`${file}.bb`).toString();
-    res.writeHead(200, { "Content-Type": "text/jsplusgoto" });
-    res.end(parseBB(decode(bb), isInclude, currentFolder));
+    res.writeHead(status.ok, { "Content-Type": "text/javascript" });
+    res.end(parseBB({ bb: decode(bb) }));
   })
   .get(["/", "/*.bb"], (req, res) => {
     const fileFull = req.params["0"] || "";
-    const file = fileFull.replace(/^(.*)\/(.*?)$/, "$2");
-    const currentFolder = fileFull.replace(/^(.*)\/(.*?)$/, "$1");
+    const currentFolder = fileFull.replace(/^(.*?)([^/]*?)$/, "$1");
     process.chdir(`${folder.shared}/${currentFolder}`);
     let html = readFileSync(`${folder.static}/html/index.html`).toString();
     html = ejs.render(html, { file: fileFull });
-    res.writeHead(200, { "Content-Type": "text/html" });
+    res.writeHead(status.ok, { "Content-Type": "text/html" });
     res.end(html);
   })
   .listen(port, () => {

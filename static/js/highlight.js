@@ -17,8 +17,10 @@ const setFunctions = (/** @type {string} */ bb) => {
 const setFunctionProps = (/** @type {string} */ bb) => {
   Array.from(bb.matchAll(/(?<=\bfunction +[a-z]\w*?[$%#]? *)\((.*?)\)([\w\W]*?)(?=end +function)/gi) || []).forEach((fn) => {
     const propsRxString = fn[1]
-      .split(/ *, */g)
-      .map((prop) => prop.match(/(^[a-z]\w*?\b[$%#]?)/gm) || "")
+      .split(/[ \t]*,[ \t]*/g)
+      .map((prop) => {
+        return prop.match(/(\b[a-z]\w*?\b)(?=[$%#]?)/gim) || "";
+      })
       .join("|");
     if (propsRxString) {
       const propsRx = new RegExp(`\\b(${propsRxString})\\b`, "gim");
@@ -40,7 +42,7 @@ const setCommands = (/** @type {string} */ bb) => {
 const setStatements = (/** @type {string} */ bb) =>
   replaceTag(
     bb,
-    /(?<!\w§)\b(if|then|else|elseif|endif|while|wend|repeat|until|forever|and|or|xor|mod|shl|shr|sar|function|type|field|for|step|to|next|return|exit|select|case|not|after|before|delete|dim|each|first|insert|new|stop|global|const|local|end|include|data|goto)\b/gim,
+    /(?<!\w§)\b(if|then|else|elseif|endif|while|wend|repeat|until|forever|and|or|xor|mod|shl|shr|sar|function|type|field|for|step|to|next|return|exit|select|case|not|after|before|delete|dim|each|first|last|insert|new|stop|global|const|local|end|include|data|goto)\b/gim,
     replaceTag("stm")
   );
 

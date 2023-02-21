@@ -1,5 +1,4 @@
 import { writeFile } from "fs";
-import { folder } from "../folder.js";
 
 export function fn(res, query) {
   try {

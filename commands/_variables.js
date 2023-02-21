@@ -206,6 +206,9 @@ const _SHORT_MAX = 65536;
 const _FLOAT_MAX = 65536.246;
 const _INTEGER_MAX = 2147483648;
 
+/**
+ * @type {{ [x: string]: { [y: string]: { [z: string]: EventListenerOrEventListenerObject } }}}
+ */
 var _eventHandlers = {};
 
 /**
@@ -225,6 +228,7 @@ var _eventHandlers = {};
  * @property {number} x
  * @property {number} y
  * @property {number} mode
+ * @property {ImageData} [image]
  */
 /** @type {Object.<string, GraphicsBuffer>} */
 var _graphicsBufferList = {
@@ -382,15 +386,44 @@ var _graphicsModeList = [
     depth: 32,
   },
 ];
+/**
+ * @type {Element}
+ */
+var _eventCanvas = document.querySelector("#blitz");
+/**
+ * @type {Element}
+ */
+var _mouseElement = undefined;
 
+var _mouseXPosition = 0;
+var _mouseYPosition = 0;
 var _mouseHitTimes = [];
 var _mouseDownThis = null;
 var _mouseDownCheck = null;
+/**
+ * @type {NodeJS.Timer}
+ */
+var _waitMouseInterval = undefined;
+/**
+ * @type {MouseEvent}
+ */
+var _waitMouseEvent = undefined;
 _addListener("mousedown", _mouseDownGetMouseDown, "mousedown");
 _addListener("mouseup", _mouseDownRemoveMouseDown, "mousedown");
 _addListener("mousedown", _mouseHitGetCode, "mousehit");
+_addListener("mousedown", _waitMouseGetCode, "waitmouse");
+
+/**
+ * @type {string | number | NodeJS.Timer}
+ */
+var _waitKeyInterval = undefined;
+/**
+ * @type {{ key: string | any[]; keyCode: any; location: number; }}
+ */
+var _waitKeyEvent = undefined;
 _addListener("keydown", _keyDownGetKeyDown, "keydown");
 _addListener("keyup", _keyDownRemoveKeyDown, "keydown");
+_addListener("keydown", _waitKeyGetCode, "waitkey");
 
 var _setFontCurrent = {
   family: "courier",
@@ -403,8 +436,20 @@ var _setFontCurrent = {
 
 var _currentDirCached = "";
 var _readDirList = {};
+/**
+ * @type {string[]}
+ */
 var _dataList = [];
 
 var _setGammaDestRed = 0;
 var _setGammaDestGreen = 0;
 var _setGammaDestBlue = 0;
+
+var _seedRndNumber = 98764321;
+/**
+ * @type {() => number}
+ */
+var _seedRndFn = null;
+_seedrnd(_seedRndNumber);
+
+var _delayTimer = undefined;

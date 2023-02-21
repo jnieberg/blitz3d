@@ -1,12 +1,3 @@
-/**
- * @type {Element}
- */
-var _eventCanvas = undefined;
-/**
- * @type {Element}
- */
-var _mouseElement = undefined;
-
 window.onload = () => {
   if (_eventCanvas) {
     _mouseElement = document.querySelector("#blitzPointer");

@@ -206,6 +206,9 @@ const _SHORT_MAX = 65536;
 const _FLOAT_MAX = 65536.246;
 const _INTEGER_MAX = 2147483648;
 
+/**
+ * @type {{ [x: string]: { [y: string]: { [z: string]: EventListenerOrEventListenerObject } }}}
+ */
 var _eventHandlers = {};
 
 /**
@@ -225,6 +228,7 @@ var _eventHandlers = {};
  * @property {number} x
  * @property {number} y
  * @property {number} mode
+ * @property {ImageData} [image]
  */
 /** @type {Object.<string, GraphicsBuffer>} */
 var _graphicsBufferList = {
@@ -382,15 +386,44 @@ var _graphicsModeList = [
     depth: 32,
   },
 ];
+/**
+ * @type {Element}
+ */
+var _eventCanvas = document.querySelector("#blitz");
+/**
+ * @type {Element}
+ */
+var _mouseElement = undefined;
 
+var _mouseXPosition = 0;
+var _mouseYPosition = 0;
 var _mouseHitTimes = [];
 var _mouseDownThis = null;
 var _mouseDownCheck = null;
+/**
+ * @type {NodeJS.Timer}
+ */
+var _waitMouseInterval = undefined;
+/**
+ * @type {MouseEvent}
+ */
+var _waitMouseEvent = undefined;
 _addListener("mousedown", _mouseDownGetMouseDown, "mousedown");
 _addListener("mouseup", _mouseDownRemoveMouseDown, "mousedown");
 _addListener("mousedown", _mouseHitGetCode, "mousehit");
+_addListener("mousedown", _waitMouseGetCode, "waitmouse");
+
+/**
+ * @type {string | number | NodeJS.Timer}
+ */
+var _waitKeyInterval = undefined;
+/**
+ * @type {{ key: string | any[]; keyCode: any; location: number; }}
+ */
+var _waitKeyEvent = undefined;
 _addListener("keydown", _keyDownGetKeyDown, "keydown");
 _addListener("keyup", _keyDownRemoveKeyDown, "keydown");
+_addListener("keydown", _waitKeyGetCode, "waitkey");
 
 var _setFontCurrent = {
   family: "courier",
@@ -403,17 +436,36 @@ var _setFontCurrent = {
 
 var _currentDirCached = "";
 var _readDirList = {};
+/**
+ * @type {string[]}
+ */
 var _dataList = [];
 
 var _setGammaDestRed = 0;
 var _setGammaDestGreen = 0;
 var _setGammaDestBlue = 0;
 
+var _seedRndNumber = 98764321;
+/**
+ * @type {() => number}
+ */
+var _seedRndFn = null;
+_seedrnd(_seedRndNumber);
+
+var _delayTimer = undefined;
+
+/**
+ * @type {ImageData}
+ */
 var _backupScreenImg = undefined;
 function _saveScreen(buffer = _currentGraphicsBuffer) {
   _backupScreenImg = buffer.context.getImageData(0, 0, buffer.canvas.width, buffer.canvas.height);
 }
 
+/**
+ * @param {number} [xOff]
+ * @param {number} [yOff]
+ */
 function _loadScreen(xOff, yOff, buffer = _currentGraphicsBuffer) {
   const x = xOff || 0;
   const y = yOff || 0;
@@ -424,33 +476,41 @@ function _loadScreen(xOff, yOff, buffer = _currentGraphicsBuffer) {
   buffer.context.putImageData(_backupScreenImg, x, y);
 }
 
-function _refreshClass(Cls) {
-  window["_var_" + Cls.name].map((res, index) => (res._index = index));
-}
-
+/**
+ * @param {number} float
+ */
 function _roundFloat(float) {
   return parseFloat(float.toPrecision(8));
 }
 
-var _eventHandlers = {};
+/**
+ * @param {string} event
+ * @param {EventListenerOrEventListenerObject} handler
+ * @param {Document} node
+ */
 function _addListener(event, handler, id = "anonymous", node = document) {
-  if (!(node in _eventHandlers)) {
+  const name = node.nodeName;
+  if (!(name in _eventHandlers)) {
     // _eventHandlers stores references to nodes
-    _eventHandlers[node] = {};
+    _eventHandlers[name] = {};
   }
-  if (!(event in _eventHandlers[node])) {
+  if (!(event in _eventHandlers[name])) {
     // each entry contains another entry for each event type
-    _eventHandlers[node][event] = {};
+    _eventHandlers[name][event] = {};
   }
-  if (!(id in _eventHandlers[node][event])) {
+  if (!(id in _eventHandlers[name][event])) {
     // each entry contains another entry for each event type
-    _eventHandlers[node][event][id] = handler;
+    _eventHandlers[name][event][id] = handler;
     node.addEventListener(event, handler, false);
   }
 }
+/**
+ * @param {string} event
+ */
 function _removeListener(event, id = "anonymous", node = document) {
-  if (node in _eventHandlers) {
-    var handlers = _eventHandlers[node];
+  const name = node.nodeName;
+  if (name in _eventHandlers) {
+    var handlers = _eventHandlers[name];
     if (event in handlers) {
       var eventHandlers = handlers[event];
       if (id in eventHandlers) {
@@ -468,24 +528,38 @@ function _lockPointer() {
   }
 }
 
+/**
+ * @param {string} string
+ */
 function _reverseString(string) {
-  return string.split("").reduce((reversed, character) => character + reversed, "");
+  return string.split("").reduce((/** @type {any} */ reversed, /** @type {any} */ character) => character + reversed, "");
 }
+/**
+ * @param {string} string
+ * @param {number} length
+ */
 function _string2bytes(string, length) {
   return string
     .split("")
     .slice(-length)
-    .map((byte) => byte.charCodeAt(0));
+    .map((/** @type {string} */ byte) => byte.charCodeAt(0));
 }
+/**
+ * @param {any[]} bytes
+ * @param {number} length
+ */
 function _bytes2string(bytes, length) {
   return bytes
-    .map((byte) => String.fromCharCode(byte))
+    .map((/** @type {number} */ byte) => String.fromCharCode(byte))
     .slice(-length)
     .join("");
 }
 // function _int2string(integer, length = 4) {
 // 	return _reverseString(_hex(integer, length * 2).match(/.{1,2}/g).map(result => String.fromCharCode(parseInt(result, 16))).join(''));
 // }
+/**
+ * @param {number} integer
+ */
 function _int2string(integer, length = 4) {
   var ascii = "";
   for (let i = length - 1; i >= 0; i--) {
@@ -493,6 +567,9 @@ function _int2string(integer, length = 4) {
   }
   return ascii;
 }
+/**
+ * @param {string} numString
+ */
 function _string2int(numString) {
   var result = 0;
   for (let i = numString.length - 1; i >= 0; i--) {
@@ -518,6 +595,10 @@ function _async() {
   //}
 }
 
+/**
+ * @param {string} command
+ * @param {string} [arguments]
+ */
 function _getCommand(command, arguments) {
   return new Promise((resolve, reject) => {
     var http = new XMLHttpRequest();
@@ -542,6 +623,9 @@ function _getCommand(command, arguments) {
   });
 }
 
+/**
+ * @param {string} command
+ */
 function _postCommand(command, arguments = {}) {
   return new Promise((resolve, reject) => {
     var http = new XMLHttpRequest();
@@ -562,6 +646,9 @@ function _postCommand(command, arguments = {}) {
   });
 }
 
+/**
+ * @param {string} filename
+ */
 function _normalizeFile(filename) {
   let newPath = _currentDirCached + "/" + filename;
   if (filename.indexOf("/") === 0 || filename.indexOf("\\") === 0) {
@@ -575,9 +662,13 @@ function _bufferEditable(buffer = _currentGraphicsBuffer) {
   return buffer && buffer.context && !buffer.locked;
 }
 
+/**
+ * @param {number[]} dimensions
+ * @param {any[]} position
+ */
 function _dimGetIndex(dimensions, position) {
   let len = 1;
-  return position.reduce((total, num, index) => {
+  return position.reduce((/** @type {number} */ total, /** @type {number} */ num, /** @type {number} */ index) => {
     if (dimensions[index]) {
       const result = total + len * num;
       len = len * (dimensions[index] + 1);
@@ -587,89 +678,72 @@ function _dimGetIndex(dimensions, position) {
   }, 0);
 }
 
-class _Float {
-  constructor(float) {
-    const result = float !== null && typeof float !== "undefined" && typeof float.value !== "undefined" ? float.value : parseFloat(float) || 0.0;
-    this.float = result.toPrecision(8).replace(/([^\.])0+$/, "$1");
-  }
-  get value() {
-    return parseFloat(this.float);
-  }
-  set value(float) {
-    const result = float !== null && typeof float !== "undefined" && typeof float.value !== "undefined" ? float.value : parseFloat(float) || 0.0;
-    this.float = result.toPrecision(8).replace(/([^\.])0+$/, "$1");
-  }
-  valueOf = () => {
-    return this.value;
-  };
+/**
+ * @param {string | number} val
+ */
+function _tofloat(val) {
+  return typeof val === "string" || typeof val === "number" || typeof val === "undefined" ? new _Float(val) : val;
 }
 
-// class _dim {
-//   dimensions;
-//   array;
+/**
+ * @param {string | number} val
+ */
+function _tostring(val) {
+  if (typeof val === "undefined") return "";
+  return typeof val === "string" || typeof val === "number" ? `${val}` : val;
+}
 
-//   constructor() {
-//     const dimensions = [...arguments];
-//     this.dimensions = dimensions;
-//     this.array = this._newArray(dimensions);
-//   }
+/**
+ * @param {string | number} val
+ */
+function _toint(val) {
+  if (typeof val === "undefined") return 0;
+  return typeof val === "string" || typeof val === "number" ? parseInt(`${val}`) : val;
+}
 
-//   _newArray(dimensions, array = []) {
-//     let arr;
-//     let rest;
-//     if (dimensions.length > 0) {
-//       const len = dimensions[0];
-//       rest = dimensions.slice(1);
-//       arr = [];
-//       for (let d = 0; d <= len; d++) {
-//         arr[d] = this._newArray(rest, array);
-//       }
-//     } else {
-//       arr = 0;
-//     }
-//     return arr;
-//   }
-
-//   _getArray(array, indices) {
-//     var returnValue = 0;
-//     if (indices.length === 0) {
-//       returnValue = array;
-//     } else {
-//       const index = Math.floor(indices[0].valueOf());
-//       if (array[index]) {
-//         returnValue = this._getArray(array[index], indices.slice(1));
-//       }
-//     }
-//     return returnValue;
-//   }
-
-//   _get() {
-//     const position = [...arguments];
-//     let result = this._getArray(this.array, position);
-//     return isNaN(result) ? result : Number(result);
-//   }
-// }
+class _Float {
+  float = "0.0";
+  constructor(/** @type {string | number} */ float) {
+    this.float = (typeof float === "undefined" ? 0.0 : parseFloat(`${float}`))
+      .toPrecision(8)
+      .replace(/(?<=\.)0+$/, "0")
+      .replace(/(?<=\.\d+?)0+$/, "");
+  }
+  valueOf = () => {
+    return parseFloat(this.float);
+  };
+  toString = () => {
+    return this.float;
+  };
+}
 
 class _Obj {
   _object;
-
   constructor(obj = 0) {
     this._object = obj;
   }
-
-  valueOf = () => {
-    return this._object;
-  };
 }
 
-/**
- * @type {Element}
- */
-var _eventCanvas = undefined;
-/**
- * @type {Element}
- */
-var _mouseElement = undefined;
+class _Type {
+  _index = -1;
+  /**
+   * @typedef {any} Fields
+   * @type {Fields[]}
+   */
+  _sub = [];
+  /**
+   * @type {Fields}
+   */
+  _obj = {};
+  /**
+   * @param {Fields} obj
+   */
+  constructor(obj) {
+    this._sub = [];
+    this._obj = obj;
+    this._type = this;
+  }
+}
 
 window.onload = () => {
   if (_eventCanvas) {
@@ -791,17 +865,14 @@ async function _writeint(stream, integer, offset) {
 	const string = _int2string(integer);
 	return await _writeline(stream, string, offset);
 }
-async function _writefloat(stream, floatP, offset) {
-	let float = floatP;
-	if (floatP instanceof _Float) {
-		float = floatP.value;
-	}
-	const farr = new Float32Array(1);
-	farr[0] = float % _FLOAT_MAX;
-	var barr = new Int8Array(farr.buffer)
-	const string = _bytes2string(barr.toString().split(','), 4);
-	return await _writeline(stream, string, offset);
+async function _writefloat(stream, float, offset) {
+  const farr = new Float32Array(1);
+  farr[0] = float % _FLOAT_MAX;
+  var barr = new Int8Array(farr.buffer);
+  const string = _bytes2string(barr.toString().split(","), 4);
+  return await _writeline(stream, string, offset);
 }
+
 async function _writefile(filename) {
 	let path = _normalizeFile(filename);
 	return await _postCommand('writefile', {
@@ -837,60 +908,57 @@ function _waittimer(timer) {
 	while (_millisecs() - timer.millisecs < 1000 / timer.frequency) { }
 	timer.millisecs = _millisecs();
 }
-var _waitMouseInterval = undefined;
-var _waitMouseEvent = undefined;
-function _waitMouseGetCode(event) {
-	_waitMouseEvent = event;
-}
-_addListener('mousedown', _waitMouseGetCode, 'waitmouse');
-
 function _waitmouse() {
-	function done() {
-		const mouseIndex = [0, 1, 3, 2];
-		const result = mouseIndex[_waitMouseEvent.which || _waitMouseEvent.button + 1 || 0];
-		_waitMouseEvent = undefined;
-		return result;
-	}
-	return new Promise((resolve) => {
-		_waitMouseInterval = setInterval(() => {
-			if (_waitMouseEvent) {
-				clearInterval(_waitMouseInterval);
-				resolve(done());
-				//_removeListener('mousedown', 'waitmouse');
-			}
-		});
-	});
+  function done() {
+    const mouseIndex = [0, 1, 3, 2];
+    const result = mouseIndex[_waitMouseEvent.which || _waitMouseEvent.button + 1 || 0];
+    _waitMouseEvent = undefined;
+    return result;
+  }
+  return new Promise((resolve) => {
+    _waitMouseInterval = setInterval(() => {
+      if (_waitMouseEvent) {
+        clearInterval(_waitMouseInterval);
+        resolve(done());
+        //_removeListener('mousedown', 'waitmouse');
+      }
+    });
+  });
 }
-var _waitKeyInterval = undefined;
-var _waitKeyEvent = undefined;
+
+/**
+ * @param {KeyboardEvent} event
+ */
 function _waitKeyGetCode(event) {
-	_waitKeyEvent = event;
+  _waitKeyEvent = event;
 }
-_addListener('keydown', _waitKeyGetCode, 'waitkey');
 
 function _waitkey(char = false) {
-	function done(key) {
-		const result = key ? _waitKeyEvent.key : _waitKeyEvent.key.length === 1 ? _asc(_waitKeyEvent.key) : _waitKeyEvent.keyCode;
-		_waitKeyEvent = undefined;
-		return result;
-	}
-	return new Promise((resolve) => {
-		_waitKeyInterval = setInterval(() => {
-			if (_waitKeyEvent) {
-				if (char) {
-					if (_waitKeyEvent.location === 0) {
-						clearInterval(_waitKeyInterval);
-						resolve(done(true));
-					} else {
-						_waitKeyEvent = undefined;
-					}
-				} else {
-					clearInterval(_waitKeyInterval);
-					resolve(done());
-				}
-			}
-		});
-	});
+  /**
+   * @param {boolean} [key]
+   */
+  function done(key) {
+    const result = key ? _waitKeyEvent.key : _waitKeyEvent.key.length === 1 ? _asc(_waitKeyEvent.key) : _waitKeyEvent.keyCode;
+    _waitKeyEvent = undefined;
+    return result;
+  }
+  return new Promise((resolve) => {
+    _waitKeyInterval = setInterval(() => {
+      if (_waitKeyEvent) {
+        if (char) {
+          if (_waitKeyEvent.location === 0) {
+            clearInterval(_waitKeyInterval);
+            resolve(done(true));
+          } else {
+            _waitKeyEvent = undefined;
+          }
+        } else {
+          clearInterval(_waitKeyInterval);
+          resolve(done());
+        }
+      }
+    });
+  });
 }
 
 function _viewport(x, y, width, height, buffer = _currentGraphicsBuffer) {
@@ -925,16 +993,26 @@ function _updategamma() {
 function _unlockbuffer(buffer = _currentGraphicsBuffer) {
   buffer.locked = false;
   buffer.context.putImageData(buffer.image, 0, 0);
+  delete buffer.image;
+  buffer.image = undefined;
 }
 
+/**
+ * @param {string} string
+ */
 function _trim(string) {
-	return string.trim();
+  return string.trim();
 }
+
 //TO BE DONE
 function _totalvidmem() {
 	return -65536;
 }
+/**
+ * @param {GraphicsBuffer[]} image
+ */
 function _tileimage(image, x = 0, y = 0, frame = 0, buffer = _currentGraphicsBuffer) {
+  frame = Math.floor(frame);
   if (image && image[frame] && image[frame].context && buffer.context && !buffer.locked) {
     const pattern = buffer.context.createPattern(image[frame].canvas, "repeat");
     buffer.context.translate(x + _originX - image[frame].x, y + _originY - image[frame].y);
@@ -958,7 +1036,7 @@ function _tileblock(image, x = 0, y = 0, frame = 0, buffer = _currentGraphicsBuf
   }
 }
 
-function _text(x = 0, y = 0, txt = 0 || "", centerX, centerY) {
+function _text(x = 0, y = 0, txt = "", centerX = false, centerY = false) {
   if (_currentGraphicsBuffer.context) {
     if (txt instanceof _Float) {
       txt = txt.float;
@@ -1018,12 +1096,18 @@ function _stringwidth(string) {
 function _stringheight(string) {
 	return _setFontCurrent.height;
 }
+/**
+ * @param {string} string
+ * @param {number} integer
+ */
 function _string(string, integer) {
-	return Array(integer + 1).join(string);
+  return Array(integer + 1).join(string);
 }
+
 function _str(val) {
-	return val.valueOf().toPrecision(8).toString();
+  return _tostring(val);
 }
+
 function _stopchannel(channel) {
 	channel.sound.stop(channel.id);
 }
@@ -1047,9 +1131,11 @@ function _sin(degrees) {
 	return Math.sin(degrees * (Math.PI / 180));
 }
 function _showpointer() {
-	const pointer = document.querySelector('#blitzPointer');
-	pointer.classList.remove('hidepointer');
+  const pointer = document.querySelector("#blitzPointer");
+  pointer.classList.remove("hidepointer");
+  _eventCanvas.classList.remove("hidepointer");
 }
+
 function _sgn(number) {
 	return Math.sign(number);
 }
@@ -1059,6 +1145,9 @@ function _setgamma(r, g, b, r2, g2, b2) {
   _setGammaDestGreen = g2 - g;
   _setGammaDestBlue = b2 - b;
 }
+
+// N/A
+function _setgfxdriver() {}
 
 /**
  * @param {{ family: string; size: number; height?: number; bold: boolean; italic: boolean; underline: boolean; }} font
@@ -1083,17 +1172,58 @@ function _setbuffer(buffer = _currentGraphicsBuffer) {
 function _seekfile(handle, position) {
 	handle.position = position;
 }
-var _seedRndSeed = 0;
-function _seedrnd(seed) {
-	_seedRndSeed = seed;
-	return function () {
-		seed = Math.sin(seed) * 1000000 - Math.floor(seed);
-		seed = seed - Math.floor(seed);
-		_seedRndSeed = seed;
-		return seed
-	};
-};
-_seedrnd(0);
+/**
+ * @param {number} num
+ */
+function _seedrnd(num) {
+  _seedRndNumber = num;
+  _rndseed();
+}
+
+/**
+ * @param {string} str
+ */
+function cyrb128(str) {
+  let h1 = 1779033703,
+    h2 = 3144134277,
+    h3 = 1013904242,
+    h4 = 2773480762;
+  for (let i = 0, k; i < str.length; i++) {
+    k = str.charCodeAt(i);
+    h1 = h2 ^ Math.imul(h1 ^ k, 597399067);
+    h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+    h3 = h4 ^ Math.imul(h3 ^ k, 951274213);
+    h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+  }
+  h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
+  h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+  h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
+  h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+  return [(h1 ^ h2 ^ h3 ^ h4) >>> 0, (h2 ^ h1) >>> 0, (h3 ^ h1) >>> 0, (h4 ^ h1) >>> 0];
+}
+
+/**
+ * @param {number} a
+ * @param {number} b
+ * @param {number} c
+ * @param {number} d
+ */
+function sfc32(a, b, c, d) {
+  return function () {
+    a >>>= 0;
+    b >>>= 0;
+    c >>>= 0;
+    d >>>= 0;
+    var t = (a + b) | 0;
+    a = b ^ (b >>> 9);
+    b = (c + (c << 3)) | 0;
+    c = (c << 21) | (c >>> 11);
+    d = (d + 1) | 0;
+    t = (t + d) | 0;
+    c = (c + t) | 0;
+    return (t >>> 0) / 4294967296;
+  };
+}
 
 //TO BE DONE
 function _scanline() {
@@ -1136,29 +1266,33 @@ function _rotateimage(image, value) {
 	}
 }
 function _rndseed() {
-	return _seedRndSeed;
+  var seed = cyrb128(`${_seedRndNumber}`);
+  _seedRndFn = sfc32(seed[0], seed[1], seed[2], seed[3]);
+  return _seedRndNumber;
 }
 
-function _rnd(startP = 0.0, endP = 1.0) {
-	let start = startP;
-	let end = endP;
-	if (startP instanceof _Float) {
-		start = startP.value;
-	}
-	if (endP instanceof _Float) {
-		end = endP.value;
-	} else {
-		end = end + 1;
-	}
-	if (start > end) {
-		end = start;
-		start = 0.0;
-	}
-	const result = _seedrnd(_seedRndSeed + 1)() * (end - start) + start;
-	if (startP instanceof _Float && endP instanceof _Float) {
-		return new _Float(result);
-	}
-	return Math.floor(result);
+/**
+ * @param {number} start
+ * @param {number} end
+ */
+function _rnd(start = 0.0, end = 1.0) {
+  // if (start instanceof _Float) {
+  //   start = start.value;
+  // }
+  // if (end instanceof _Float) {
+  //   end = end.value;
+  // } else {
+  //   // end = end + 1;
+  // }
+  if (start >= end) {
+    end = start;
+    start = 0.0;
+  }
+  const result = _seedRndFn() * (end - start) + start;
+  // if (start instanceof _Float && end instanceof _Float) {
+  //   return new _Float(result);
+  // }
+  return result;
 }
 
 function _right(string, length) {
@@ -1271,7 +1405,10 @@ async function _readfile(filename) {
   };
 }
 
-async function _readdir(directory) {
+/**
+ * @param {string} directory
+ */
+async function _readdir(directory = "") {
   let path = _normalizeFile(directory);
   const dir = await _postCommand("readdir", { folder: path });
   _readDirList[dir.folder] = dir;
@@ -1298,19 +1435,20 @@ function _readavail(stream) {
 	return stream.data.length - stream.position < 0 ? 0 : stream.data.length - stream.position;
 }
 var _readIndex = 0;
-function _read(variable) {
-	let result;
-	do {
-		result = _dataList[_readIndex++];
-	} while (typeof result === 'string' && result.indexOf('__') === 0);
-	return result;
+function _read() {
+  let result;
+  do {
+    result = _dataList[_readIndex++];
+  } while (typeof result === "string" && result.indexOf("__") === 0);
+  return result;
 }
-function _rand(start = 1, end = 1) {
-	if (start > end) {
-		end = start;
-		start = 1;
-	}
-	return _rnd(start, end);
+
+function _rand(start = 1, end = 0) {
+  if (start >= end) {
+    end = start;
+    start = 0;
+  }
+  return Math.floor(_rnd(start, end + 1));
 }
 
 function _rset(string, length) {
@@ -1319,8 +1457,8 @@ function _rset(string, length) {
 	}
 	return String(string).padStart(length);
 }
-function _print1(/** @type {_Float | boolean | number | string} */ txt = 0 || "", /** @type {boolean} */ fix = false) {
-  if (_currentGraphicsBuffer.context) {
+function _print1(/** @type {_Float | boolean | number | string} */ txt = "", /** @type {boolean} */ fix = false, buffer = _frontbuffer()) {
+  if (buffer.context) {
     if (txt instanceof _Float) {
       txt = txt.float;
     } else if (typeof txt === "number") {
@@ -1328,14 +1466,14 @@ function _print1(/** @type {_Float | boolean | number | string} */ txt = 0 || ""
         txt = _roundFloat(txt);
       }
     }
-    if (_printY + _setFontCurrent.height * 0.5 > _currentGraphicsBuffer.canvas.height) {
-      _saveScreen();
-      _loadScreen(0, -_setFontCurrent.height);
+    if (!fix && _printY + _setFontCurrent.height * 0.5 > buffer.canvas.height) {
+      _saveScreen(buffer);
+      _loadScreen(0, -_setFontCurrent.height, buffer);
       _printY = _printY - _setFontCurrent.height;
     }
     const offY = _setFontCurrent.height - _setFontCurrent.size;
-    _currentGraphicsBuffer.context.fillStyle = _colorRGB();
-    _currentGraphicsBuffer.context.fillText(txt, _printX + _writeX + _originX, _printY + _originY + offY);
+    buffer.context.fillStyle = _colorRGB();
+    buffer.context.fillText(`${txt}`, _printX + _writeX + _originX, _printY + _originY + offY);
     if (!fix) {
       _printY = _printY + _setFontCurrent.height;
       _printX = 0;
@@ -1343,8 +1481,10 @@ function _print1(/** @type {_Float | boolean | number | string} */ txt = 0 || ""
     _writeX = 0;
   }
 }
-function _print(/** @type {_Float | boolean | number | string} */ txt = 0 || "") {
-  _print1(txt);
+function _print(/** @type {any[]} */ ...txt) {
+  const txtjoin = txt.join("");
+  _print1(txtjoin, true, _backbuffer());
+  _print1(txtjoin);
 }
 
 function _pokeshort(bank, offset, short) {
@@ -1431,27 +1571,43 @@ function _origin(x, y) {
 async function _opentcpstream(ip, port) {
 	return await _postCommand('opentcpstream', { ip: ip, port: port });
 }
+/**
+ * @type {NodeJS.Timer}
+ */
 var _openMovieInterval = undefined;
+var _openMoviePlaying = false;
 
+/**
+ * @param {string} filename
+ */
 async function _openmovie(filename) {
-	const movie = document.createElement('video');
-	movie.src = filename;
-	movie.autoplay = true;
-	movie.muted = true;
-	movie.controls = false;
-	return new Promise((resolve, reject) => {
-		_openMovieInterval = setInterval(() => {
-			if (movie.play) {
-				clearInterval(_openMovieInterval);
-				movie.play();
-				resolve({
-					name: filename.trim(),
-					data: movie
-				});
-			}
-		}, 100);
-	});
+  const movie = document.createElement("video");
+  movie.src = filename;
+  movie.autoplay = true;
+  movie.muted = true;
+  movie.controls = false;
+  movie.loop = true;
+  movie.addEventListener("canplaythrough", play, false);
+  _openMovieInterval = undefined;
+  _openMoviePlaying = false;
+
+  function play() {
+    movie.play();
+    _openMoviePlaying = true;
+  }
+  return new Promise((resolve) => {
+    _openMovieInterval = setInterval(() => {
+      if (_openMoviePlaying) {
+        clearInterval(_openMovieInterval);
+        resolve({
+          name: filename.trim(),
+          data: movie,
+        });
+      }
+    }, 100);
+  });
 }
+
 async function _openfile(filename) {
 	let path = _normalizeFile(filename);
 	const result = await _getCommand('openfile', path);
@@ -1470,16 +1626,22 @@ function _nextfile(directory) {
 		directory.file[directory.position++].name :
 		'';
 }
-function _new(Cls) {
-  if (!window["_var_" + Cls.name]) {
-    window["_var_" + Cls.name] = [];
-  }
-  window["_var_" + Cls.name].push(new Cls());
-  const obj = window["_var_" + Cls.name];
-  const result = obj[obj.length - 1];
-  result._class = Cls;
-  result._index = obj.length - 1;
-  return result;
+function _new(klass) {
+  const self = klass;
+  //   klass._index += 1;
+  klass._sub.push({
+    ...klass._obj,
+    get _sub() {
+      return self._sub;
+    },
+    get _type() {
+      return self;
+    },
+    get _index() {
+      return klass._sub.indexOf(this);
+    },
+  });
+  return klass._sub[klass._sub.length - 1];
 }
 
 function _moviewidth(movie) {
@@ -1491,11 +1653,16 @@ function _movieplaying(movie) {
 function _movieheight(movie) {
 	return movie.data.videoHeight;
 }
+/**
+ * @param {number} x
+ * @param {number} y
+ */
 function _movemouse(x, y) {
-	_mouseXPosition = x;
-	_mouseYPosition = y;
-	document.dispatchEvent(new MouseEvent('mousemove'));
+  _mouseXPosition = x;
+  _mouseYPosition = y;
+  document.dispatchEvent(new MouseEvent("mousemove"));
 }
+
 var _mouseZSpeedOffset = 0;
 function _mousezspeed() {
 	const result = _mouseZSpeedOffset;
@@ -1510,18 +1677,43 @@ var _mouseYSpeedOffset = 0;
 function _mouseyspeed() {
 	return _mouseYSpeedOffset;
 }
-var _mouseYPosition = 0;
 function _mousey() {
-	return _mouseYPosition;
+  return _mouseYPosition;
 }
+
 var _mouseXSpeedOffset = 0;
 function _mousexspeed() {
 	return _mouseXSpeedOffset;
 }
-var _mouseXPosition = 0;
 function _mousex() {
-	return _mouseXPosition;
+  return _mouseXPosition;
 }
+
+/**
+ * @param {MouseEvent} event
+ */
+function _waitMouseGetCode(event) {
+  _waitMouseEvent = event;
+}
+
+function _mousewait() {
+  function done() {
+    const mouseIndex = [0, 1, 3, 2];
+    const result = mouseIndex[_waitMouseEvent.which || _waitMouseEvent.button + 1 || 0];
+    _waitMouseEvent = undefined;
+    return result;
+  }
+  return new Promise((resolve) => {
+    _waitMouseInterval = setInterval(() => {
+      if (_waitMouseEvent) {
+        clearInterval(_waitMouseInterval);
+        resolve(done());
+        //_removeListener('mousedown', 'waitmouse');
+      }
+    });
+  });
+}
+
 function _mouseHitGetCode(event) {
   const mouseIndex = [0, 1, 3, 2];
   const result = mouseIndex[_mouseDownThis.which || _mouseDownThis.button + 1 || 0];
@@ -1788,9 +1980,10 @@ function _len(string) {
 function _left(string, length) {
 	return (string || '').substring(0, length);
 }
-function _last(Cls) {
-	return window['_var_' + Cls.name][window['_var_' + Cls.name].length - 1];
-}
+const _last = (/** @type {any} */ obj) => {
+  obj._type._index = obj._sub.length - 1;
+  return obj._sub[obj._type._index];
+};
 
 function _lset(string, length) {
 	if (typeof string === 'number') {
@@ -1800,19 +1993,19 @@ function _lset(string, length) {
 }
 var _keyHitTimes = [];
 function _keyHitGetCode(event) {
-	const result = _scancode.indexOf(event.code) === -1 ? 0 : _scancode.indexOf(event.code);
-	_keyHitTimes[result] = (_keyHitTimes[result] || 0) + 1;
+  const result = _scancode.indexOf(event.code) === -1 ? 0 : _scancode.indexOf(event.code);
+  _keyHitTimes[result] = (_keyHitTimes[result] || 0) + 1;
 }
-_addListener('keydown', _keyHitGetCode, 'keyhit');
+_addListener("keydown", _keyHitGetCode, "keyhit");
 
 function _keyhit(code) {
-	const res = _keyHitTimes[code];
-	if (res > 0) {
-		_keyHitTimes[code] = 0;
-		return res || 0;
-	} else {
-		return 0;
-	}
+  const res = _keyHitTimes[code];
+  if (res > 0) {
+    _keyHitTimes[code] = 0;
+    return res || 0;
+  } else {
+    return 0;
+  }
 }
 
 var _keyDownList = {};
@@ -1841,16 +2034,13 @@ function _int(str) {
 function _instr(string1, string2, offset = 1) {
 	return string1.indexOf(string2, offset - 1) + 1;
 }
-function _insert(obj, ins) {
-	const Cls = obj._class;
-	const from = obj._index;
-	const to = ins._index + 1;
-	if (!_each(Cls)) {
-		window['_var_' + Cls.name] = [];
-	}
-	window['_var_' + Cls.name].splice(to, 0, _each(Cls).splice(from, 1)[0]);
-	_refreshClass(Cls);
-}
+const _insert = (/** @type {any} */ obj, /** @type {any} */ at) => {
+  const objIndex = obj._index;
+  const atIndex = at._index;
+  obj._sub.splice(objIndex, 1);
+  obj._sub.splice(atIndex, 0, obj);
+  return 0;
+};
 
 var _inputText = "";
 var _inputTextCursorInterval = undefined;
@@ -1913,22 +2103,6 @@ async function _input(input) {
   }
 }
 
-/**
- * @param {string} filename
- */
-function _include(filename) {
-  return new Promise((resolve, reject) => {
-    filename = filename.replace(/\\/g, "/");
-    fetch(`${filename}.js?include=true`, { method: "GET" })
-      .then((data) => data.text())
-      .then((js) => {
-        const fn = new Function(js);
-        fn();
-        resolve();
-      });
-  });
-}
-
 function _imagesoverlap(image, x, y, image2, x2, y2, frame = 0, frame2 = 0) {
 	if (image && image[frame] && image2 && image2[frame2]) {
 		return x - image[frame].canvas.width / 2 < x2 + image2[frame2].canvas.width / 2 &&
@@ -1939,43 +2113,53 @@ function _imagesoverlap(image, x, y, image2, x2, y2, frame = 0, frame2 = 0) {
 	return 0;
 }
 function _imagescollide(image, x, y, frame, image2, x2, y2, frame2) {
-	if (image && image[frame] && image2 && image2[frame2]) {
-		if (_imagesoverlap(image, x, y, image2, x2, y2, frame, frame2)) {
-			const intersect = _imagescollideIntersection(x, y, image[frame].canvas.width, image[frame].canvas.height, x2, y2, image2[frame2].canvas.width, image2[frame2].canvas.height);
-			if (intersect.width > 0 && intersect.height > 0) {
-				const imgData1 = image[frame].context.getImageData(intersect.x - x, intersect.y - y, intersect.width, intersect.height);
-				const imgData2 = image2[frame2].context.getImageData(intersect.x - x2, intersect.y - y2, intersect.width, intersect.height);
-				var imgData1Data = [...imgData1.data];
-				var imgData2Data = [...imgData2.data];
-				for (var i = 3, _length = imgData1Data.length; i < _length; i += 4) {
-					if (imgData1Data[i] > 0 && imgData2Data[i] > 0) {
-						return 1;
-					}
-				}
-			}
-		}
-	}
-	return 0;
+  if (image && image[frame] && image2 && image2[frame2]) {
+    if (_imagesoverlap(image, x, y, image2, x2, y2, frame, frame2)) {
+      const intersect = _imagescollideIntersection(
+        x,
+        y,
+        image[frame].canvas.width,
+        image[frame].canvas.height,
+        x2,
+        y2,
+        image2[frame2].canvas.width,
+        image2[frame2].canvas.height
+      );
+      if (intersect.width > 0 && intersect.height > 0) {
+        const imgData1 = image[frame].context.getImageData(intersect.x - x, intersect.y - y, intersect.width, intersect.height);
+        const imgData2 = image2[frame2].context.getImageData(intersect.x - x2, intersect.y - y2, intersect.width, intersect.height);
+        var imgData1Data = [...imgData1.data];
+        var imgData2Data = [...imgData2.data];
+        for (var i = 3, _length = imgData1Data.length; i < _length; i += 4) {
+          if (imgData1Data[i] > 0 && imgData2Data[i] > 0) {
+            return 1;
+          }
+        }
+      }
+    }
+  }
+  return 0;
 }
 
 function _imagescollideIntersection(x, y, width, height, x2, y2, width2, height2) {
-	var rect1Right = x + width,
-		rect1Bottom = y + height,
-		rect2Right = x2 + width2,
-		rect2Bottom = y2 + height2;
+  var rect1Right = x + width,
+    rect1Bottom = y + height,
+    rect2Right = x2 + width2,
+    rect2Bottom = y2 + height2;
 
-	var rect3Left = Math.max(x, x2),
-		rect3Top = Math.max(y, y2),
-		rect3Right = Math.min(rect1Right, rect2Right),
-		rect3Bottom = Math.min(rect1Bottom, rect2Bottom);
+  var rect3Left = Math.max(x, x2),
+    rect3Top = Math.max(y, y2),
+    rect3Right = Math.min(rect1Right, rect2Right),
+    rect3Bottom = Math.min(rect1Bottom, rect2Bottom);
 
-	return {
-		x: rect3Left,
-		y: rect3Top,
-		width: rect3Right - rect3Left,
-		height: rect3Bottom - rect3Top
-	}
+  return {
+    x: rect3Left,
+    y: rect3Top,
+    width: Math.ceil(rect3Right - rect3Left),
+    height: Math.ceil(rect3Bottom - rect3Top),
+  };
 }
+
 function _imageyhandle(image) {
 	if (image && image[0]) {
 		return image[0].y;
@@ -2010,9 +2194,11 @@ async function _hostip(index) {
 	return Number(await _getCommand('hostip', index));
 }
 function _hidepointer() {
-	const pointer = document.querySelector('#blitzPointer');
-	pointer.classList.add('hidepointer');
+  const pointer = document.querySelector("#blitzPointer");
+  pointer.classList.add("hidepointer");
+  _eventCanvas.classList.add("hidepointer");
 }
+
 function _hex(integer, length = 8) {
 	const signAdd = integer < 0 ? 4294967296 : 0;
 	return (Array(length + 1).join('0') + Number(integer + signAdd).toString(16)).slice(-length).toUpperCase();
@@ -2217,11 +2403,18 @@ function _gfxmodeheight(mode) {
 	return _graphicsModeList[mode].height;
 }
 function _gfxmodeexists(width, height, depth) {
-	return _graphicsModeList.find(result => result.width === width && result.height === height && result.depth === depth) ? 1 : 0;
+  return true; //_graphicsModeList.find(result => result.width === width && result.height === height && result.depth === depth) ? 1 : 0;
 }
+
 function _gfxmodedepth(mode) {
 	return _graphicsModeList[mode].depth;
 }
+function _gfxdrivername() {
+  const gl = document.createElement("canvas").getContext("webgl");
+  const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+  return gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+}
+
 function _frontbuffer() {
   return _graphicsBufferList["_front"];
 }
@@ -2284,9 +2477,13 @@ function _flushkeys() {
 function _floor(num) {
 	return Math.floor(num);
 }
-function _float(string) {
-	return parseFloat(String(string));
+/**
+ * @param {any} object
+ */
+function _float(object) {
+  return new _Float(parseFloat(String(object)) || 0.0);
 }
+
 var _flipSync = true;
 function _flip() {
   if (_flipSync) {
@@ -2305,18 +2502,20 @@ function _flip() {
   }
 }
 
-function _first(Cls) {
-	return window['_var_' + Cls.name][0];
-}
+const _first = (/** @type {any} */ obj) => {
+  obj._type._index = 0;
+  return obj._sub[obj._type._index];
+};
 
 async function _filetype(filename) {
-	const path = _normalizeFile(filename);
-	const folder = path.replace(/^(.*[\/\\])(.*?)$/, '$1');
-	const file = path.replace(/^(.*[\/\\])(.*?)$/, '$2');
-	return _readDirList[folder] && _readDirList[folder].file && _readDirList[folder].file.find(res => res.name === file) ?
-		_readDirList[folder].file.find(res => res.name === file).type :
-		Number(await _postCommand('filetype', { folder: folder, filename: file }));
+  const path = _normalizeFile(filename);
+  const folder = path.replace(/^(.*[\/\\])(.*?)$/, "$1");
+  const file = path.replace(/^(.*[\/\\])(.*?)$/, "$2");
+  return _readDirList[folder] && _readDirList[folder].file && _readDirList[folder].file.find((res) => res.name === file)
+    ? _readDirList[folder].file.find((res) => res.name === file).type
+    : Number(await _postCommand("filetype", { folder: folder, filename: file }));
 }
+
 async function _filesize(filename) {
 	const res = await _getCommand('filesize', filename)
 	return res;
@@ -2328,7 +2527,8 @@ function _exp(x) {
 	return Math.exp(x);
 }
 //TO BE DONE
-function _execfile(file) { }
+function _execfile(file) {}
+
 function _eof(stream) {
 	const output = stream.data;
 	return stream.position >= output.length;
@@ -2341,14 +2541,27 @@ function _end() {
   throw new Error();
 }
 
-function _each(Cls) {
-	return window['_var_' + Cls.name];
-}
+const _each = (/** @type {any} */ obj) => {
+  return obj._sub;
+};
 
+var _drawmovierate = _millisecs();
+/**
+ * @param {{name: string, data: HTMLVideoElement}} movie
+ * @param {number} x
+ * @param {number} y
+ * @param {number} width
+ * @param {number} height
+ */
 function _drawmovie(movie, x, y, width, height, buffer = _currentGraphicsBuffer) {
   if (movie && movie.data) {
     if (!movie.data.paused && !movie.data.ended) {
-      _drawblockrect(movie.data, x, y, 0, 0, width, height, frame, true, buffer);
+      buffer.context.drawImage(movie.data, x, y, width, height);
+      let rate = 60 / (_millisecs() - _drawmovierate);
+      rate = rate < 0.1 ? 0.1 : rate;
+      rate = rate > 10 ? 10 : rate;
+      movie.data.playbackRate = rate;
+      _drawmovierate = _millisecs();
     }
   }
 }
@@ -2452,26 +2665,23 @@ async function _deletefile(filename) {
 async function _deletedir(path) {
 	await _postCommand('deletedir', { path: path });
 }
-function _delete(obj) {
-	const Cls = obj._class;
-	const index = obj._index;
-	if (!_each(Cls)) {
-		window['_var_' + Cls.name] = [];
-	}
-	window['_var_' + Cls.name].splice(index, 1);
-	_refreshClass(Cls);
-}
+const _delete = (/** @type {any} */ obj) => {
+  obj._sub.splice(obj._index, 1);
+  return null;
+};
 
-var _delayTimer = undefined;
+/**
+ * @param {number} ms
+ */
 async function _delay(ms) {
-	let timer = _millisecs();
-	_delayTimer = timer;
-	while (await _async()) {
-		timer = _millisecs();
-		if (timer - _delayTimer >= ms) {
-			break;
-		}
-	}
+  let timer = _millisecs();
+  _delayTimer = timer;
+  while (await _async()) {
+    timer = _millisecs();
+    if (timer - _delayTimer >= ms) {
+      break;
+    }
+  }
 }
 
 var _debugLogCount = 0;
@@ -2507,16 +2717,6 @@ function _errorlog(err, log = false) {
   } catch (e) {}
 }
 
-var _dataList = [];
-/**
- * @param {string} label
- * @param {any[]} data
- */
-function _data(label, ...data) {
-  _dataList.push(`__${label}`, ...data);
-}
-
-var _dataList = [];
 /**
  * @param {string} label
  * @param {any[]} data
@@ -2583,6 +2783,11 @@ async function _counthostips(host) {
 function _countgfxmodes() {
 	return _graphicsModeList.length - 1;
 }
+// N/A
+function _countgfxdrivers() {
+  return 1;
+}
+
 function _cos(degrees) {
 	return Math.cos(degrees * (Math.PI / 180));
 }
@@ -2594,24 +2799,41 @@ function _copyrect(x, y, width, height, x2, y2, buffer = _currentGraphicsBuffer,
   _drawblockrect([buffer], x2, y2, x, y, width, height, 0, true, buffer2);
 }
 
-function _copypixelfast(x, y, buffer, x2, y2, buffer2 = buffer) {
-	if (buffer.context && buffer.locked) {
-		var data = buffer.image.data;
-		var index = _dimGetIndex([buffer.canvas.width - 1, buffer.canvas.height - 1], [x + _originX, y + _originY]) * 4;
-		var index2 = _dimGetIndex([buffer2.canvas.width - 1, buffer2.canvas.height - 1], [x2 + _originX, y2 + _originY]) * 4;
-		buffer2.image.data[index2 + 0] = data[index + 0];
-		buffer2.image.data[index2 + 1] = data[index + 1];
-		buffer2.image.data[index2 + 2] = data[index + 2];
-		buffer2.image.data[index2 + 3] = data[index + 3];
-	}
+/**
+ * @param {number} x
+ * @param {number} y
+ * @param {GraphicsBuffer} buffer
+ * @param {number} x2
+ * @param {number} y2
+ */
+function _copypixelfast(x, y, buffer, x2, y2, buffer2 = _currentGraphicsBuffer) {
+  if (buffer.context && buffer2.image && buffer2.locked) {
+    const data = buffer.context.getImageData(x, y, 1, 1).data;
+    // const image = buffer2.context.createImageData(1, 1);
+    var index = 0; //_dimGetIndex([buffer.canvas.width - 1, buffer.canvas.height - 1], [x + _originX, y + _originY]) * 4;
+    var index2 = _dimGetIndex([buffer2.canvas.width - 1, buffer2.canvas.height - 1], [x2 + _originX, y2 + _originY]) * 4;
+    buffer2.image.data[index2 + 0] = data[index + 0];
+    buffer2.image.data[index2 + 1] = data[index + 1];
+    buffer2.image.data[index2 + 2] = data[index + 2];
+    buffer2.image.data[index2 + 3] = data[index + 3];
+  }
 }
-function _copypixel(x, y, buffer, x2, y2, buffer2 = buffer) {
-	if (buffer.context) {
-		var data = buffer.context.getImageData(x + _originX, y + _originY, 1, 1).data;
-		buffer2.context.fillStyle = `rgba(${data[0]}, ${data[1]}, ${data[2]}, ${data[3] / 255})`;
-		buffer2.context.fillRect(x2 + _originX, y2 + _originY, 1, 1);
-	}
+
+/**
+ * @param {number} x
+ * @param {number} y
+ * @param {GraphicsBuffer} buffer
+ * @param {number} x2
+ * @param {number} y2
+ */
+function _copypixel(x, y, buffer, x2, y2, buffer2 = _currentGraphicsBuffer) {
+  if (buffer.context) {
+    var data = buffer.context.getImageData(x + _originX, y + _originY, 1, 1).data;
+    buffer2.context.fillStyle = `rgba(${data[0]}, ${data[1]}, ${data[2]}, ${data[3] / 255})`;
+    buffer2.context.fillRect(x2 + _originX, y2 + _originY, 1, 1);
+  }
 }
+
 function _copyimage(image) {
 	const result = [];
 	for (let i = 0, _length = image.length; i < _length; i++) {
@@ -2661,6 +2883,9 @@ function _cls(buffer = _currentGraphicsBuffer) {
   if (buffer.context && !buffer.locked) {
     buffer.context.fillStyle = _clsColorRGB;
     buffer.context.fillRect(0, 0, buffer.canvas.width, buffer.canvas.height);
+    _printX = 0;
+    _printY = 0;
+    _writeX = 0;
   }
 }
 
@@ -2721,15 +2946,10 @@ function _calldll() { }
 function _bin(integer) {
 	return (Array(33).join('0') + (integer >>> 0).toString(2)).slice(-32);
 }
-function _before(obj) {
-	if (obj._index <= 0) {
-		return {
-			'_class': obj._class,
-			'_index': -1
-		}
-	}
-	return window['_var_' + obj._class.name][obj._index - 1];
-}
+const _before = (/** @type {any} */ obj) => {
+  obj._type._index = obj._type._index > 0 ? obj._type._index - 1 : 0;
+  return obj._sub[obj._type._index];
+};
 
 function _banksize(bank) {
 	return bank && bank.data ? bank.data.length : 0;
@@ -2752,27 +2972,23 @@ function _asc(code) {
 var _appTitlePrompt = undefined;
 
 function _apptitle(title, prompt) {
-	document.title = `Blitz3D - ${title}`;
-	if (prompt) {
-		_appTitlePrompt = prompt;
-		window.onbeforeunload = (event) => {
-			event = event || window.event;
-			if (event) {
-				event.returnValue = _appTitlePrompt;
-			}
-			return _appTitlePrompt;
-		};
-	}
+  document.title = `Blitz3D - ${title}`;
+  if (prompt) {
+    _appTitlePrompt = prompt;
+    window.onbeforeunload = (event) => {
+      event = event || window.event;
+      if (event) {
+        event.returnValue = _appTitlePrompt;
+      }
+      return _appTitlePrompt;
+    };
+  }
 }
-function _after(obj) {
-	if (obj._index >= window['_var_' + obj._class.name].length - 1) {
-		return {
-			'_class': obj._class,
-			'_index': window['_var_' + obj._class.name].length
-		}
-	}
-	return window['_var_' + obj._class.name][obj._index + 1];
-}
+
+const _after = (/** @type {any} */ obj) => {
+  obj._type._index = obj._type._index < obj._sub.length - 1 ? obj._type._index + 1 : obj._sub.length;
+  return obj._sub[obj._type._index];
+};
 
 async function _accepttcpstream(handle) {
 	return await _postCommand('accepttcpstream', { name: handle });

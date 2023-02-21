@@ -37,6 +37,9 @@ body #blitz {
   image-rendering: optimize-contrast;
   -ms-interpolation-mode: nearest-neighbor;
 }
+body #blitz.hidepointer {
+  cursor: none;
+}
 body #blitzBack {
   display: none;
 }

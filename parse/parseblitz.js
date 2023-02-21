@@ -1,13 +1,13 @@
 import beautify from "beautify";
 import { systemCommands } from "../commands.js";
 import { getFunctions } from "./getfunctions.js";
-import { getVariables } from "./getvariables.js";
+import { getVariables, isAvailableWord } from "./getvariables.js";
 import { getGlobal } from "./getglobal.js";
 import { getProperties } from "./getproperties.js";
 import { readFileSync } from "fs";
 
-const stringReplacer = "~~~";
-const stringReplacerRx = /~~~(\d+)~~~/;
+const stringReplacer = "___";
+const stringReplacerRx = /___(\d+)___/;
 /**
  * @type {string[]}
  */
@@ -16,7 +16,11 @@ let stringListBackupCounter = 0;
 
 const parseIncludes = (/** @type {string} */ bb) => {
   bb = bb.replace(/^ *include *" *(.*?) *" *$/gim, (m, m1) => {
-    const include = readFileSync(m1).toString();
+    m1 = m1.replace(/\\/g, "/");
+    let include = "";
+    try {
+      include = readFileSync(m1).toString();
+    } catch (err) {}
     return include;
   });
   return bb;
@@ -27,7 +31,7 @@ const clearComments = (/** @type {string} */ bb) => bb.replace(/;.*?$/gm, "");
 const captureStrings = (/** @type {string} */ bb) => {
   stringListBackup = Array.from(bb.match(/"(.*?)"/g) || []);
   stringListBackupCounter = 0;
-  while (bb.match(/"(.*?)"/)) bb = bb.replace(/"(.*?)"/, stringReplacer + stringListBackupCounter++ + stringReplacer);
+  while (bb.match(/"(.*?)"/)) bb = bb.replace(/"(.*?)"/, ` ${stringReplacer}${stringListBackupCounter++}${stringReplacer} `);
   return bb;
 };
 
@@ -36,15 +40,6 @@ const restoreStrings = (/** @type {string} */ bb) => {
   return bb;
 };
 
-const initializeBB = (/** @type {string} */ bb, /** @type {string} */ folder) => {
-  return `endgraphics
-readdir ""
-loadfont "courier",18,false,false,false
-${bb}
-end`;
-};
-
-// Fix example: "If cl Color a,b,c: Rect 0,0,100,100"
 const cleanup = (/** @type {string} */ bb) => {
   bb = bb
     .toLowerCase()
@@ -52,43 +47,66 @@ const cleanup = (/** @type {string} */ bb) => {
     .replace(/^ +| +$/gm, "")
     .replace(/ *([()<>,=+\-*/:^]) */g, "$1")
     .replace(/ *\) *(?=\w)/g, ") ")
-    .replace(/ *\r?\n+ */g, "\n")
+    .replace(/\r/g, "")
+    .replace(/ *\n+ */g, "\n")
     .replace(/ *\bNot\b */gim, "!")
     .replace(/\bElse +If\b/gi, "ElseIf")
-    .replace(/\b(If|ElseIf)\b *([^\s]+?(?: +(?:And|Or|Xor|Mod) +[^\s]+?)*) +((?!Then|And|Or|Xor|Mod).+?)$/gim, "$1 $2 Then $3");
-
-  console.log(bb);
+    .replace(
+      /\b(If|ElseIf)\b *([^\s]+?(?: +(?:And|Or|Xor|Mod|Shl|Shr|Sar) +[^\s]+?)*) +((?!(?:Then|And|Or|Xor|Mod|Shl|Shr|Sar)\b).+?)$/gim,
+      "$1 $2 Then $3"
+    );
   while (bb.match(/\bIf\b *(.+?) *\bThen\b /im)) bb = bb.replace(/\bIf\b *(.+?) *\bThen\b *(.+?) *$/gim, "If $1\n$2\nEndIf");
   while (bb.match(/\bElseIf\b *(.+?) *\bThen\b /im)) bb = bb.replace(/\bElseIf\b *(.+?) *\bThen\b *(.+?) *$/gim, "\nElseIf $1\n$2");
+
   bb = bb
     .replace(/^(.+?) *\bElse\b *(.+?) *$/gim, "$1\nElse\n$2")
     .replace(/\bEnd +(If|Function|Select|Type)\b/gim, "End$1")
     .replace(/ *:+ */g, "\n")
     .replace(/(^\.[a-z]\w*?) (.+?$)/gim, "$1\n$2")
     .replace(/\bThen\b */gi, "\n")
-    .replace(/\b([a-z]\w*?)\b[$%#]/gi, "$1")
-    .replace(/\b([a-z]\w*?)\.(?:[a-z]\w*?)=\b(new .*?)$/gim, "$1=$2")
+
+    .replace(/\b([a-z]\w*?)\b(?==___)/gim, "$1$")
+
     .replace(/\b([a-z]\w*?)\.([a-z]\w*?)\b/gim, "$1")
-    .replace(/\\([a-z]\w*?)\b/gi, ".$1")
+    .replace(/\b([a-z]\w*?.*?)\\([a-z]\w*?)\b/gim, "$1.$2")
     .replace(/^Read (.*?)$/gim, "$1=Read $1");
 
   return bb;
 };
 
-const findCommands = (/** @type {string} */ bb) => {
-  const customFunctions = Array.from(bb.matchAll(/^Function ([a-z]\w*?\b)/gim))?.map((m) => m[1]) || [];
+const parseTypes = (/** @type {string} */ bb) => {
+  // bb = bb.replace(/(?<=\b(global|local)\b.*?),/gim, "\n$1 ");
+  const variables = Array.from(new Set(bb.match(/(\b[a-z]\w*?\b)[$#%]/gi)));
+  variables.forEach((variable) => {
+    const v = variable.slice(0, -1);
+    const t = variable.slice(-1);
+    const varRx = new RegExp(`(\\b${v}\\b[$#%]?)(?![$#%])`, "gim"); //(?<!^(?:function|local|global) .*?)
+    if (t === "#") bb = bb.replace(varRx, `${v}_f`);
+    else if (t === "$") bb = bb.replace(varRx, `${v}_s`);
+    else if (t === "%") bb = bb.replace(varRx, `${v}_i`);
+  });
+  bb = bb.replace(/\b([a-z]\w*?)\b[$#%]/gi, "$1");
+  return bb;
+};
 
+const findCommands = (/** @type {string} */ bb) => {
+  const customFunctions = Array.from(bb.matchAll(/^function ([a-z]\w*?)\b/gim))?.map((m) => m[1]) || [];
   /** @type {string[]} */
   const commands = Object.keys(systemCommands)
     .concat(customFunctions)
     .sort((a, b) => (a < b ? 1 : -1));
   commands.forEach((systemCommandName) => {
-    const cmdRx = new RegExp(`\\b${systemCommandName}\\b`, "gim"); //.replace(/\$/gm, "\\$")
-    bb = bb.replace(cmdRx, `_${systemCommandName.toLowerCase()}`);
+    const cmdRx = new RegExp(`\\b${systemCommandName}(_[sfi])?\\b`, "gim"); //.replace(/\$/gm, "\\$")
+    const async = systemCommands[systemCommandName]?.async || false;
+    bb = bb.replace(cmdRx, `${async ? "await " : ""}_${systemCommandName.toLowerCase()}`);
     // }
   });
   bb = bb.replace(/(?<=\W )(\b_[a-z]\w*?\b)/gi, "\n$1");
-  while (bb.match(/(?<!\()\b(_[a-z]\w*?\b)(?: (.*?$)|$)/gim)) bb = bb.replace(/(?<!\()\b(_[a-z]\w*?\b)(?: (.*?$)|$)/gim, "$1($2)");
+  //(?<!\()
+  while (bb.match(/\b(_[a-z]\w*?\b)(?:([ +-.].*?$)|$)/gim))
+    bb = bb.replace(/\b(_[a-z]\w*?\b)(?:([ +-.].*?$)|$)/gim, (m, m1 = "", m2 = "") => {
+      return `${m1.trim()}(${m2.trim()})`;
+    });
   return { bb, commands };
 };
 
@@ -114,47 +132,55 @@ ${fn[2]}`;
 const parseStatements = (/** @type {string} */ bb) => {
   bb = bb
     // single operators
-    .replace(/%([01]+)/gm, "parseInt('$1',2) - 4294967296")
+    .replace(/%([01]+)/gm, "parseInt('$1',2)-4294967296")
     .replace(/\$([A-F0-9]+)/gim, "(0x$1 shr 0x100)")
+    .replace(/\btrue\b/gim, "1")
+    .replace(/\bfalse\b/gim, "0")
     .replace(/\band\b/gim, "&")
     .replace(/\bor\b/gim, "|")
     .replace(/\^/gim, "**")
-    .replace(/\bxor\b/gim, "|") //think of a solution here!
     .replace(/\bmod\b/gim, "%")
-    .replace(/\bshl\b/gim, "<<")
-    .replace(/\bshr\b/gim, ">>")
-    .replace(/\bsar\b/gim, ">>>");
+    .replace(/ *\bmod\b */gim, "%")
+    .replace(/ *\bxor\b */gim, "^")
+    .replace(/ *\bshl\b */gim, "<<")
+    .replace(/ *\bshr\b */gim, ">>")
+    .replace(/ *\bsar\b */gim, ">>>")
+
+    // data blocks
+    .replace(/^\.([a-z]\w*?)((?:\n_data\(.*?\))+)/gim, '_data("$1",$2)')
+    .replace(/,?\n_data\((.*?)\)/gi, ",$1")
+    .replace(/^_restore\((.*?)\)$/gim, '_restore("$1")')
+    .replace(/^([\w\W]*?)((?:\n_data\(.*?\))+)/gi, "$2\n$1");
 
   // tricky "label"s and loopy "goto"s
+  bb = bb.replace(/(\n\.([a-z]\w*?)\n[\w\W]*?)(\n\.([a-z]\w*?)\n[\w\W]*?)\bgoto \2\b/gi, "$1$3continue ___$4");
+  bb = bb.replace(/(\n\.([a-z]\w*?)\n[\w\W]*?)\bgoto \2\b/gi, "$1continue ___$2");
+  bb = bb.replace(/\bgoto ([a-z]\w*?)\b(\n[\w\W]*?\.\1)/gi, "break$2");
+
   while (bb.match(/^\.([a-z]\w*?\b)/gim)) {
-    bb = bb.replace(
-      /(?<=function.*?\n)([\w\W]*?)\.([a-z]\w*?\b)([\w\W]*?)(?=(?:end )?function.*?\n|$)/gi,
-      "__$2: while(_async()) {\n$1break\n}\n__$2_: while(_async()) {$3break\n}\n"
-    );
-    bb = bb.replace(
-      /^([\w\W]*?)\.([a-z]\w*?\b)([\w\W]*?)(?=(?:end )?function.*?\n|$)/gi,
-      "__$2: while(_async()) {\n$1break\n}\n__$2_: while(_async()) {$3break\n}\n"
-    );
+    bb = bb
+      .replace(
+        /(?<=function.*?\n)([\w\W]*?)\n\.([a-z]\w*?\b)([\w\W]*?)(?=(\n\.[a-z]|(?:end)?function).*?\n|$)/gi,
+        "___$2: while(await _async()) {\n$1\n__$2_: while(await _async()) {$3\nbreak\n}\nbreak\n}\n"
+      )
+      .replace(
+        /^([\w\W]*?)\n\.([a-z]\w*?\b)([\w\W]*?)(?=(\n\.[a-z]|(?:end)?function).*?\n|$)/gi,
+        "___$2: while(await _async()) {\n$1\n__$2_: while(await _async()) {$3\nbreak\n}\nbreak\n}\n"
+      );
   }
 
   bb = bb
-    .replace(/(?<=\b__([a-z]\w*?)_: [\w\W]*?)(?:\bgoto \1\b)/gi, "continue __$1_")
-    .replace(/(?<=\b__([a-z]\w*?)_: [\w\W]*?)(?:\bgoto [a-z]\w*?\b)/gi, "break __$1_")
-    .replace(/\b(?:goto|gosub) ([a-z]\w*?)\b/gi, "break __$1")
-
     // for conditional expressions, change single = & | into doubles == && ||, and <> into != (not).
-    .replace(/(?<=(?:^(?:if|elseif|while|until|return)\b|^[a-z]\w*?=).*?)(?<![=&\|<>!])([=&\|])(?![=&\|<>])/gim, "$1$1")
-    .replace(/(?<=(?:^(?:if|elseif|while|until|return)\b|^[a-z]\w*?=).*?)<>/gim, "!=")
+    .replace(/(?<=(?:^(?:if|elseif|while|until|return|case)\b|^[a-z]\w*?=).*?)(?<![=&|<>!])([=&|])(?![=&|<>])/gim, "$1$1")
+    .replace(/(?<=(?:^(?:if|elseif|while|until|return|case)\b|^[a-z]\w*?=).*?)<>/gim, "!=")
 
     // add brackets to functions and make them async
-    .replace(/^function\b *(_[a-z]\w*?)\((.*?)\)$/gim, "async function $1($2) {")
+    .replace(/^function\b *(_\w*?)\((.*?)\)$/gim, "async function $1($2) {")
 
-    // change type and field combination into class
-    .replace(/^type\b *(.+?)$/gim, "class $1 {")
-    .replace(/^field\b *(.+?)$/gim, (m, m1) => `${m1.replace(/,/gim, '=""\n')}=""`)
-
-    // change dim command into a _dim() function
-    .replace(/\b_dim\(([_a-z]\w*?)\((?<=\()([^)(]*(?:\([^)(]*(?:\([^)(]*(?:\([^)(]*\)[^)(]*)*\)[^)(]*)*\)[^)(]*)*)(?=\))\)\)/gim, "var $1=_dim($2)")
+    // change type and field combination into a new Set
+    .replace(/^type\b *(.+?)$/gim, "var $1=new _Type({")
+    .replace(/^field\b *(.+?)$/gim, (m, m1) => `${m1.replace(/,/gim, ",\n")},`)
+    .replace(/^endtype$/gim, "})")
 
     // bracketize if and else conditions
     .replace(/^if\b *(.+?)$/gim, "if($1) {")
@@ -162,58 +188,55 @@ const parseStatements = (/** @type {string} */ bb) => {
     .replace(/\belseif\b *(.+?)$/gim, "} else if($1) {")
 
     // while, repeat, until, forever and exit statements
-    .replace(/^while\b *(.+?)$/gim, "while(_async()&&($1)) {")
+    .replace(/^while\b *(.+?)$/gim, "while(await _async()&&($1)) {")
     .replace(/^repeat$/gim, "do {")
-    .replace(/^until\b *(.+?)$/gim, "} while(_async()&&!($1))")
-    .replace(/^forever$/gim, "} while(_async())")
+    .replace(/^until\b *(.+?)$/gim, "} while(await _async()&&!($1))")
+    .replace(/^forever$/gim, "} while(await _async())")
     .replace(/^exit$/gim, "break")
 
     // change "select" to "switch" statement, with their mandatory "break"
     .replace(/^select\b *(.+?)$/gim, "switch($1) {")
-    .replace(/^case\b *(.+?)$/gim, "break\ncase $1:")
+    .replace(/\bcase\b *(.+?)\n([\w\W]*?)(?=\b(?:case|default|endselect)\b)/gi, "case $1:\n$2break\n")
     .replace(/^default$/gim, "default:")
-    .replace(/^endselect$/gim, "break\n}")
+    .replace(/^endselect$/gim, "}")
 
     // split combined global and local variables, and change them respecively into "var" and "let"
-    .replace(/(?<=\b(global|local)\b.*?),/gim, "\n$1 ")
     .replace(/^global\b/gim, "var")
     .replace(/^local\b/gim, "let")
-    .replace(/(?<=^(?:let|var|const) )(\b[a-z]\w*?\b)(?!=)/gim, '$1=""')
 
     // change various BB "for" statements into javascript "for"
     .replace(/^for\b *(.+?)=(.+?) *\bto\b *(.+?)(?: *\bstep\b *(.+?))$/gim, "for($1=$2;$1<=$3;$1=$1+$4) {")
     .replace(/^for\b *(.+?)=(.+?) *\bto\b *(.+?)$/gim, "for($1=$2;$1<=$3;$1+=1) {")
-    .replace(/^for\b *(.+?)=_(.*?[^{\n])$/gim, "for($1 of _$2) {")
 
-    // data blocks
-    .replace(/^\.([a-z]\w*?)((\n_data\b\(.*?\))+)/gim, '_data("$1",$2)')
-    .replace(/,?\n_data\((.*?)\)/gi, ",$1")
-    .replace(/^_restore\((.*?)\)$/gim, '_restore("$1")')
+    //for room.chair=each chair
+    .replace(/^for ([_a-z]\w*?)=(.+?)$/gim, "for($1 of $2) {")
 
     // closing statements
-    .replace(/^(endif|wend|next|endfunction|endtype)$/gim, "}")
+    .replace(/^(endif|wend|next|endfunction)$/gim, "}")
 
     // commands with identical name that need to be lower-cased
-    .replace(/\b(return|true|false|const)\b/gim, (/** @type {string} */ match) => match.toLowerCase())
+    .replace(/\b(return|const)\b/gim, (/** @type {string} */ match) => match.toLowerCase())
 
-    // tricky and loopy "goto"s
-    // .replace(/^\.([a-z]\w*?\b)([^{}]*?)\n\bgoto \1\b/gim, "$1: while(_async()) {$2\ncontinue $1\nbreak\n}")
-    // .replace(/^\.([a-z]\w*?\b)([\w\W]*)$/gi, "_$1__s: {$2\n}")
-    // .replace(/^([\w\W]*{\n)(.*?)\.([a-z]\w*?\b)/gi, "_$1__s: {$2\n}")
-    // .replace(/^goto\b/gim, "break")
+    // some exception commands should get a return variable
+    .replace(/\b_(delete|insert)\b\(([a-z]\w*?\b)/gim, "$2=_$1($2,");
 
-    // make all function calls "await"-ing
-    .replace(/(?<!\bnew |\bfunction )_([a-z]\w*?)(?=\()\b/gim, "await _$1");
+  // make all function calls "await"-ing
+  // .replace(/(?<!\bnew |\bfunction |\.)\b(_[a-z]\w*?)\b(?=\()/gim, "await $1");
 
   return bb;
 };
 
 const parseDims = (/** @type {string} */ bb) => {
+  // change dim command into a _dim() function
+  bb = bb.replace(
+    /\b_dim\(([_a-z]\w*?)\((?<=\()([^)(]*(?:\([^)(]*(?:\([^)(]*(?:\([^)(]*\)[^)(]*)*\)[^)(]*)*\)[^)(]*)*)(?=\))\)\)/gim,
+    "var $1=_dim($2)"
+  );
   // search DIM
-  const dims = Array.from(bb.matchAll(/(\b[a-z]\w*?)=await _dim\(/gim));
+  const dims = Array.from(bb.matchAll(/(\b[a-z]\w*?)=_dim\(/gim));
   dims.map((d) => {
     const variable = d[1];
-    const dimensions = d[2];
+    // const dimensions = d[2];
     const dimRx = new RegExp(
       `(?<!_dim\\()\\b(${variable})\\((?<=\\()([^)(]*(?:\\([^)(]*(?:\\([^)(]*(?:\\([^)(]*\\)[^)(]*)*\\)[^)(]*)*\\)[^)(]*)*)(?=\\))\\)`,
       "gim"
@@ -225,66 +248,81 @@ const parseDims = (/** @type {string} */ bb) => {
   return bb;
 };
 
-const fixLabels = (/** @type {string} */ bb) => {
-  // let l;
-  // while ((l = Array.from(bb.matchAll(/(?:}([^}]*?)\n\.)([_a-z]\w*?)\b/gi))[0])) {
-  //   const rest = l[1];
-  //   const label = l[2];
-  //   const end = l.index;
-  //   const start = findOpenBracket(bb, end);
-  //   bb = `${bb.substring(0, start)}\n${label}:\n{${bb.substring(start, end + 1)}}${rest}${bb.substring(end + rest.length + label.length + 3)}`;
-  // }
-
-  // bb = bb.replace(/(?<=^[\w\W]*\b)/gi);
-
-  return bb;
+const fixSyntax = (/** @type {string} */ bb) => {
+  return bb.replace(/\b(switch(.*?) {)\nbreak/gi, "$1").replace(/(?<=^_print\(.*?___)\+(?=.*?\))|(?<=^_print\(.*?)\+(?=___.*?\))/gim, ",");
 };
-
-const fixSyntax = (/** @type {string} */ bb) => bb.replace(/\b(switch(.*?) {)\nbreak/gi, "$1");
 
 const applySemicolons = (/** @type {string} */ bb) => {
-  return bb.replace(/([^{}:\n])$/gim, "$1;");
+  return bb.replace(/([^{}:,\n])$/gim, "$1;");
 };
 
-const underscoreVariables = (/** @type {string} */ bb) => {
-  const variables = bb.match(/(?<=^(?:var|let|const) )([a-z]\w*?\b)/gim) || [];
+const parseVariables = (/** @type {string} */ bb) => {
+  const variables = Array.from(new Set(bb.match(/(?<=^(?:global|local|const) .*?)([a-z]\w*?\b)/gim) || []))
+    .filter((v) => isAvailableWord(v))
+    .filter((v) => !bb.match(new RegExp(`\\.${v}\\b`)));
   variables.forEach((v) => {
     const vRx = new RegExp(`\\b(${v})\\b`, "gim");
+    const tRx = new RegExp(`(?<!^(?:function|global|local|const|type) .*?|\\.|.*?")(\\b${v}\\b)(?![([]|\\.[a-z]\\w*?\\b|\\+?=|:)`, "gim");
+    const type = v.replace(/^[a-z].*?(?:_([sfi]))?$/gi, "$1");
+    if (type === "s") bb = bb.replace(tRx, "_tostring($1)");
+    else if (type === "f") bb = bb.replace(tRx, "_tofloat($1)");
+    else if (type === "b") bb = bb.replace(tRx, "_toint($1)");
+    else bb = bb.replace(tRx, "_toint($1)");
     bb = bb.replace(vRx, "_$1");
   });
+  bb = bb.replace(/\b(\w+?)(_[sfi])?\b/gi, "$1");
   return bb;
 };
 
 const initializeJS = (/** @type {string} */ bb) => {
   return `(async () => {
   try {
+    _endgraphics();
+    _readdir();
+    await _loadfont("courier", 18, 0, 0, 0);
     ${bb}
+    _end();
   } catch(error) {
     if(error && error.message) _errorlog(error.stack, true);
   }
-})()`;
+})();`;
 };
 
-export const parseBB = (/** @type {string} */ bb, /** @type {boolean} */ isInclude = false, /** @type {string} */ folder = "") => {
-  if (!isInclude) bb = initializeBB(bb, folder);
+const compactCode = (/** @type {string} */ bb) =>
+  bb
+    .replace(/\n+/g, "")
+    .replace(/[ \t]+(?=\W)/g, "")
+    .replace(/(?<=\W)[ \t]+/g, "")
+    .trim();
+
+/**
+ * @param {Object} parsedata
+ * @param {string} parsedata.bb
+ * @param {string} [parsedata.folder]
+ * @param {boolean} [parsedata.compact]
+ * @returns {string}
+ */
+export const parseBB = ({ bb, compact = false }) => {
   bb = parseIncludes(bb);
-  bb = clearComments(bb);
   bb = captureStrings(bb);
+  bb = clearComments(bb);
   bb = cleanup(bb);
+  bb = parseTypes(bb);
   ({ bb } = findCommands(bb));
   bb = setFunctionVariables(bb);
   bb = setGlobalVariables(bb);
-  bb = parseStatements(bb);
   bb = parseDims(bb);
-  bb = fixLabels(bb);
+  bb = parseVariables(bb);
+  bb = parseStatements(bb);
   bb = fixSyntax(bb);
   bb = applySemicolons(bb);
-  bb = underscoreVariables(bb);
 
+  if (compact) bb = compactCode(bb);
   bb = restoreStrings(bb);
-  bb = initializeJS(bb);
+  if (!compact) bb = initializeJS(bb);
 
-  return beautify(bb, { format: "js" });
+  if (compact) return bb;
+  else return beautify(bb, { format: "js" });
 };
 
 export const commandList = (/** @type {string} */ bb) => findCommands(bb).commands.filter((cmd) => cmd.indexOf("_") !== 0);

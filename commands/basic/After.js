@@ -1,9 +1,4 @@
-function _after(obj) {
-	if (obj._index >= window['_var_' + obj._class.name].length - 1) {
-		return {
-			'_class': obj._class,
-			'_index': window['_var_' + obj._class.name].length
-		}
-	}
-	return window['_var_' + obj._class.name][obj._index + 1];
-}
+const _after = (/** @type {any} */ obj) => {
+  obj._type._index = obj._type._index < obj._sub.length - 1 ? obj._type._index + 1 : obj._sub.length;
+  return obj._sub[obj._type._index];
+};

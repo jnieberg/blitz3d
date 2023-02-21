@@ -69,7 +69,7 @@ function parseRequestEnd(requestUrl, res, mime, baseDirectory = folder.base, ref
         resp.end(body);
       }
     });
-    fStream.on("error", (err) => {
+    fStream.on("error", () => {
       resp.status(status.notFound).end();
     });
   })(fileStream, res);
@@ -97,46 +97,3 @@ export function parseRequest(req, res, isBaseDirectory = true) {
     }
   }
 }
-
-// /**
-//  * @param {import("express-serve-static-core").Request<{}, any, any, import("qs").ParsedQs, Record<string, any>>} req
-//  * @param {import("express-serve-static-core").Response<any, Record<string, any>, number>} res
-//  */
-// export function parseRequestBB(req, res) {
-//   const requestUrl = parse(`/public${decodeURI(req.url)}`);
-//   let pathname = null;
-//   if (requestUrl?.pathname) {
-//     pathname = decodeURI(requestUrl.pathname);
-//     const dir = pathname.replace(/^\/public(.*)\/.*?$/, "$1");
-//     res.writeHead(status.ok, {
-//       "Content-Type": "application/javascript",
-//     });
-
-//     const fileStream = createReadStream(`${folder.base}${pathname.replace(/\.js$/, "")}`);
-//     (function _foo(fStream, resp) {
-//       let body = "";
-//       fStream.on("data", (data) => {
-//         body = body + data;
-//       });
-//       fStream.on("end", async () => {
-//         const file = await import(folder.base + pathname);
-//         process.chdir(dirname(file));
-//         const result = parseBB(body, dir).output;
-//         resp.end(`(async () => {
-// try {
-// await _loadfont('courier', 18, false, false, false);
-// _endgraphics();
-// await _changedir('${dir}');
-// ${result}
-// } catch(err) {
-// if(err && err.message) _errorlog(err, true);
-// }
-// ${endProgram()}
-// })();`);
-//       });
-//       fStream.on("error", (err) => {
-//         resp.end();
-//       });
-//     })(fileStream, res);
-//   }
-// }

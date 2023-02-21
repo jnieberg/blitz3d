@@ -1,11 +1,17 @@
-function _new(Cls) {
-  if (!window["_var_" + Cls.name]) {
-    window["_var_" + Cls.name] = [];
-  }
-  window["_var_" + Cls.name].push(new Cls());
-  const obj = window["_var_" + Cls.name];
-  const result = obj[obj.length - 1];
-  result._class = Cls;
-  result._index = obj.length - 1;
-  return result;
+function _new(klass) {
+  const self = klass;
+  //   klass._index += 1;
+  klass._sub.push({
+    ...klass._obj,
+    get _sub() {
+      return self._sub;
+    },
+    get _type() {
+      return self;
+    },
+    get _index() {
+      return klass._sub.indexOf(this);
+    },
+  });
+  return klass._sub[klass._sub.length - 1];
 }

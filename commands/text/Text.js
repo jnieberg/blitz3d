@@ -1,4 +1,4 @@
-function _text(x = 0, y = 0, txt = 0 || "", centerX, centerY) {
+function _text(x = 0, y = 0, txt = "", centerX = false, centerY = false) {
   if (_currentGraphicsBuffer.context) {
     if (txt instanceof _Float) {
       txt = txt.float;

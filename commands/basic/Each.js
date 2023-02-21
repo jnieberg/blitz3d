@@ -1,3 +1,3 @@
-function _each(Cls) {
-	return window['_var_' + Cls.name];
-}
+const _each = (/** @type {any} */ obj) => {
+  return obj._sub;
+};

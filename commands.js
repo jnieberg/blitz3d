@@ -4,7 +4,7 @@ import { folder } from "./requests/folder.js";
 
 const traverseDir = (
   /** @type {string} */ dir,
-  /** @type {Object.<string, { name: string; path: string; source: string; props: string[]; }>} */ files = {}
+  /** @type {Object.<string, { name: string; path: string; source: string; props: string[]; async: boolean; }>} */ files = {}
 ) => {
   readdirSync(dir).forEach((file) => {
     const name = file.replace(/\..*?$/g, "");
@@ -14,11 +14,12 @@ const traverseDir = (
     } else {
       const source = readFileSync(fullPath).toString();
       const props = (source.match(/(?<=\bfunction\b *.*?\()(.*?)(?=\) *{\n)/i) || [])[0]?.split(/ *, */g) || [];
-      files[name] = { name, path: fullPath, source, props };
+      const async = !!source.match(/\breturn new Promise|async function\b/);
+      files[name] = { name, path: fullPath, source, props, async };
     }
   });
   return files;
 };
 
-/** @type {Object.<string, { name: string; path: string; source: string; props: string[]; }>} */
+/** @type {Object.<string, { name: string; path: string; source: string; props: string[]; async: boolean; }>} */
 export let systemCommands = traverseDir(folder.commands);

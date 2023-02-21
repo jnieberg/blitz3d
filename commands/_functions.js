@@ -1,8 +1,15 @@
+/**
+ * @type {ImageData}
+ */
 var _backupScreenImg = undefined;
 function _saveScreen(buffer = _currentGraphicsBuffer) {
   _backupScreenImg = buffer.context.getImageData(0, 0, buffer.canvas.width, buffer.canvas.height);
 }
 
+/**
+ * @param {number} [xOff]
+ * @param {number} [yOff]
+ */
 function _loadScreen(xOff, yOff, buffer = _currentGraphicsBuffer) {
   const x = xOff || 0;
   const y = yOff || 0;
@@ -13,33 +20,41 @@ function _loadScreen(xOff, yOff, buffer = _currentGraphicsBuffer) {
   buffer.context.putImageData(_backupScreenImg, x, y);
 }
 
-function _refreshClass(Cls) {
-  window["_var_" + Cls.name].map((res, index) => (res._index = index));
-}
-
+/**
+ * @param {number} float
+ */
 function _roundFloat(float) {
   return parseFloat(float.toPrecision(8));
 }
 
-var _eventHandlers = {};
+/**
+ * @param {string} event
+ * @param {EventListenerOrEventListenerObject} handler
+ * @param {Document} node
+ */
 function _addListener(event, handler, id = "anonymous", node = document) {
-  if (!(node in _eventHandlers)) {
+  const name = node.nodeName;
+  if (!(name in _eventHandlers)) {
     // _eventHandlers stores references to nodes
-    _eventHandlers[node] = {};
+    _eventHandlers[name] = {};
   }
-  if (!(event in _eventHandlers[node])) {
+  if (!(event in _eventHandlers[name])) {
     // each entry contains another entry for each event type
-    _eventHandlers[node][event] = {};
+    _eventHandlers[name][event] = {};
   }
-  if (!(id in _eventHandlers[node][event])) {
+  if (!(id in _eventHandlers[name][event])) {
     // each entry contains another entry for each event type
-    _eventHandlers[node][event][id] = handler;
+    _eventHandlers[name][event][id] = handler;
     node.addEventListener(event, handler, false);
   }
 }
+/**
+ * @param {string} event
+ */
 function _removeListener(event, id = "anonymous", node = document) {
-  if (node in _eventHandlers) {
-    var handlers = _eventHandlers[node];
+  const name = node.nodeName;
+  if (name in _eventHandlers) {
+    var handlers = _eventHandlers[name];
     if (event in handlers) {
       var eventHandlers = handlers[event];
       if (id in eventHandlers) {
@@ -57,24 +72,38 @@ function _lockPointer() {
   }
 }
 
+/**
+ * @param {string} string
+ */
 function _reverseString(string) {
-  return string.split("").reduce((reversed, character) => character + reversed, "");
+  return string.split("").reduce((/** @type {any} */ reversed, /** @type {any} */ character) => character + reversed, "");
 }
+/**
+ * @param {string} string
+ * @param {number} length
+ */
 function _string2bytes(string, length) {
   return string
     .split("")
     .slice(-length)
-    .map((byte) => byte.charCodeAt(0));
+    .map((/** @type {string} */ byte) => byte.charCodeAt(0));
 }
+/**
+ * @param {any[]} bytes
+ * @param {number} length
+ */
 function _bytes2string(bytes, length) {
   return bytes
-    .map((byte) => String.fromCharCode(byte))
+    .map((/** @type {number} */ byte) => String.fromCharCode(byte))
     .slice(-length)
     .join("");
 }
 // function _int2string(integer, length = 4) {
 // 	return _reverseString(_hex(integer, length * 2).match(/.{1,2}/g).map(result => String.fromCharCode(parseInt(result, 16))).join(''));
 // }
+/**
+ * @param {number} integer
+ */
 function _int2string(integer, length = 4) {
   var ascii = "";
   for (let i = length - 1; i >= 0; i--) {
@@ -82,6 +111,9 @@ function _int2string(integer, length = 4) {
   }
   return ascii;
 }
+/**
+ * @param {string} numString
+ */
 function _string2int(numString) {
   var result = 0;
   for (let i = numString.length - 1; i >= 0; i--) {
@@ -107,6 +139,10 @@ function _async() {
   //}
 }
 
+/**
+ * @param {string} command
+ * @param {string} [arguments]
+ */
 function _getCommand(command, arguments) {
   return new Promise((resolve, reject) => {
     var http = new XMLHttpRequest();
@@ -131,6 +167,9 @@ function _getCommand(command, arguments) {
   });
 }
 
+/**
+ * @param {string} command
+ */
 function _postCommand(command, arguments = {}) {
   return new Promise((resolve, reject) => {
     var http = new XMLHttpRequest();
@@ -151,6 +190,9 @@ function _postCommand(command, arguments = {}) {
   });
 }
 
+/**
+ * @param {string} filename
+ */
 function _normalizeFile(filename) {
   let newPath = _currentDirCached + "/" + filename;
   if (filename.indexOf("/") === 0 || filename.indexOf("\\") === 0) {
@@ -164,9 +206,13 @@ function _bufferEditable(buffer = _currentGraphicsBuffer) {
   return buffer && buffer.context && !buffer.locked;
 }
 
+/**
+ * @param {number[]} dimensions
+ * @param {any[]} position
+ */
 function _dimGetIndex(dimensions, position) {
   let len = 1;
-  return position.reduce((total, num, index) => {
+  return position.reduce((/** @type {number} */ total, /** @type {number} */ num, /** @type {number} */ index) => {
     if (dimensions[index]) {
       const result = total + len * num;
       len = len * (dimensions[index] + 1);
@@ -176,77 +222,69 @@ function _dimGetIndex(dimensions, position) {
   }, 0);
 }
 
+/**
+ * @param {string | number} val
+ */
+function _tofloat(val) {
+  return typeof val === "string" || typeof val === "number" || typeof val === "undefined" ? new _Float(val) : val;
+}
+
+/**
+ * @param {string | number} val
+ */
+function _tostring(val) {
+  if (typeof val === "undefined") return "";
+  return typeof val === "string" || typeof val === "number" ? `${val}` : val;
+}
+
+/**
+ * @param {string | number} val
+ */
+function _toint(val) {
+  if (typeof val === "undefined") return 0;
+  return typeof val === "string" || typeof val === "number" ? parseInt(`${val}`) : val;
+}
+
 class _Float {
-  constructor(float) {
-    const result = float !== null && typeof float !== "undefined" && typeof float.value !== "undefined" ? float.value : parseFloat(float) || 0.0;
-    this.float = result.toPrecision(8).replace(/([^\.])0+$/, "$1");
-  }
-  get value() {
-    return parseFloat(this.float);
-  }
-  set value(float) {
-    const result = float !== null && typeof float !== "undefined" && typeof float.value !== "undefined" ? float.value : parseFloat(float) || 0.0;
-    this.float = result.toPrecision(8).replace(/([^\.])0+$/, "$1");
+  float = "0.0";
+  constructor(/** @type {string | number} */ float) {
+    this.float = (typeof float === "undefined" ? 0.0 : parseFloat(`${float}`))
+      .toPrecision(8)
+      .replace(/(?<=\.)0+$/, "0")
+      .replace(/(?<=\.\d+?)0+$/, "");
   }
   valueOf = () => {
-    return this.value;
+    return parseFloat(this.float);
+  };
+  toString = () => {
+    return this.float;
   };
 }
 
-// class _dim {
-//   dimensions;
-//   array;
-
-//   constructor() {
-//     const dimensions = [...arguments];
-//     this.dimensions = dimensions;
-//     this.array = this._newArray(dimensions);
-//   }
-
-//   _newArray(dimensions, array = []) {
-//     let arr;
-//     let rest;
-//     if (dimensions.length > 0) {
-//       const len = dimensions[0];
-//       rest = dimensions.slice(1);
-//       arr = [];
-//       for (let d = 0; d <= len; d++) {
-//         arr[d] = this._newArray(rest, array);
-//       }
-//     } else {
-//       arr = 0;
-//     }
-//     return arr;
-//   }
-
-//   _getArray(array, indices) {
-//     var returnValue = 0;
-//     if (indices.length === 0) {
-//       returnValue = array;
-//     } else {
-//       const index = Math.floor(indices[0].valueOf());
-//       if (array[index]) {
-//         returnValue = this._getArray(array[index], indices.slice(1));
-//       }
-//     }
-//     return returnValue;
-//   }
-
-//   _get() {
-//     const position = [...arguments];
-//     let result = this._getArray(this.array, position);
-//     return isNaN(result) ? result : Number(result);
-//   }
-// }
-
 class _Obj {
   _object;
-
   constructor(obj = 0) {
     this._object = obj;
   }
+}
 
-  valueOf = () => {
-    return this._object;
-  };
+class _Type {
+  _index = -1;
+  /**
+   * @typedef {any} Fields
+   * @type {Fields[]}
+   */
+  _sub = [];
+  /**
+   * @type {Fields}
+   */
+  _obj = {};
+  /**
+   * @param {Fields} obj
+   */
+  constructor(obj) {
+    this._sub = [];
+    this._obj = obj;
+    this._type = this;
+  }
 }

@@ -1,10 +1,7 @@
-function _insert(obj, ins) {
-	const Cls = obj._class;
-	const from = obj._index;
-	const to = ins._index + 1;
-	if (!_each(Cls)) {
-		window['_var_' + Cls.name] = [];
-	}
-	window['_var_' + Cls.name].splice(to, 0, _each(Cls).splice(from, 1)[0]);
-	_refreshClass(Cls);
-}
+const _insert = (/** @type {any} */ obj, /** @type {any} */ at) => {
+  const objIndex = obj._index;
+  const atIndex = at._index;
+  obj._sub.splice(objIndex, 1);
+  obj._sub.splice(atIndex, 0, obj);
+  return 0;
+};

@@ -1,4 +1,3 @@
-var _dataList = [];
 /**
  * @param {string} label
  * @param {any[]} data
