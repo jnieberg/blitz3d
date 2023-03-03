@@ -71,22 +71,24 @@ function _graphicsCreate(width, height, id, mode = -1) {
   buffer.transform21 = 0.0;
   buffer.transform12 = 0.0;
   buffer.transform22 = 1.0;
+  // if (id === "_front") {
+  buffer.context.restore();
+  buffer.context.save();
   if (id === "_front") {
-    buffer.context.restore();
-    buffer.context.save();
-    if (mode === 1) {
-      document.querySelector("#blitz").classList.add("full");
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      buffer.canvas.width = w;
-      buffer.canvas.height = h;
-      buffer.context.scale(w / width, h / height);
-    } else if (mode === 0 || mode === 2 || mode === 3) {
-      buffer.canvas.width = width;
-      buffer.canvas.height = height;
-      document.querySelector("#blitz").classList.remove("full");
-    }
+    if (mode === 1) document.body.classList.add("full");
+    else document.body.classList.remove("full");
   }
+  //   const w = window.innerWidth;
+  //   const h = window.innerHeight;
+  //   buffer.canvas.width = w;
+  //   buffer.canvas.height = h;
+  //   buffer.context.scale(w / width, h / height);
+  // } else if (mode === 0 || mode === 2 || mode === 3) {
+  buffer.canvas.width = width;
+  buffer.canvas.height = height;
+  // buffer.canvas.classList.remove("full");
+  // }
+  // }
   // buffer.context.filter =
   //   "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxmaWx0ZXIgaWQ9ImZpbHRlciIgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIj48ZmVDb21wb25lbnRUcmFuc2Zlcj48ZmVGdW5jUiB0eXBlPSJpZGVudGl0eSIvPjxmZUZ1bmNHIHR5cGU9ImlkZW50aXR5Ii8+PGZlRnVuY0IgdHlwZT0iaWRlbnRpdHkiLz48ZmVGdW5jQSB0eXBlPSJkaXNjcmV0ZSIgdGFibGVWYWx1ZXM9IjAgMSIvPjwvZmVDb21wb25lbnRUcmFuc2Zlcj48L2ZpbHRlcj48L3N2Zz4=#filter)"; // SLOOOOOW
   buffer.context.textBaseline = "top";

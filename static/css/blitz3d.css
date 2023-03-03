@@ -27,7 +27,7 @@ body #blitz {
   background-color: #000000;
   margin: auto;
   position: absolute;
-  inset: 0 35% 0 0;
+  inset: 0 25% 0 0;
   image-rendering: -o-pixelated;
   image-rendering: pixelated;
   image-rendering: optimizeSpeed;
@@ -44,13 +44,14 @@ body #blitzBack {
   display: none;
 }
 
-body #blitz.full {
-  bottom: auto;
+body.full.started #blitz {
+  width: 100% !important;
+  height: 100% !important;
 }
 
-body #blitz.full + .debug {
+/* body.started #blitz.full + .debug {
   display: none;
-}
+} */
 
 body #blitzInputOut,
 body #blitzFolder {
@@ -135,11 +136,12 @@ body #blitzInputRich {
 }
 
 body #blitzFolder {
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 12px;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
   background: #003566;
   overflow-y: auto;
-  width: 15%;
+  width: 25%;
   height: 100%;
   left: 0;
 }
@@ -149,8 +151,9 @@ body #blitzFolder .reload {
   display: inline-block;
   color: #fff;
   font-size: 24px;
-  width: 35px;
-  height: 35px;
+  width: 28px;
+  height: 28px;
+  padding: 4px;
   top: 5px;
   right: 5px;
   cursor: pointer;
@@ -176,10 +179,10 @@ body #blitzFolder ul li {
 }
 
 body #blitzFolder ul li.heading {
-  font-size: 14px;
   font-weight: bold;
+  font-size: 10px;
   color: #fff;
-  margin-bottom: 5px;
+  margin-bottom: 10px;
   width: calc(100% - 30px);
 }
 
@@ -187,10 +190,9 @@ body #blitzFolder ul li.heading > * {
   color: #fff;
   height: 20px;
   display: inline-block;
-  padding: 0;
-  padding: 4px 10px 0;
+  padding: 0 4px 0;
   margin: 0;
-  border-radius: 12px;
+  border-radius: 4px;
 }
 
 body #blitzFolder ul li > a {
@@ -199,11 +201,6 @@ body #blitzFolder ul li > a {
   text-decoration: none;
   padding: 2px 5px;
 }
-
-body #blitzFolder ul li > a.file {
-  padding-left: 20px;
-}
-
 body #blitzFolder ul li > a:hover {
   color: #ff8;
   background-color: #0088ee;
@@ -212,17 +209,31 @@ body #blitzFolder ul li > a:hover {
 body #blitzFolder ul li > a::before {
   position: absolute;
   color: #fff;
-  font-size: 20px;
+  font-size: 14px;
   display: inline-block;
-  width: 15px;
-  height: 18px;
+  width: 24px;
+  height: 17px;
   bottom: 6px;
-  left: 2px;
+  left: 0;
   text-align: center;
 }
 
+body #blitzFolder ul li > a.file {
+  padding-left: 24px;
+}
+
 body #blitzFolder ul li > a.file::before {
-  content: "🗋";
+  content: "🗒";
+}
+
+body #blitzFolder ul li > a.file--bb::before {
+  content: "";
+  background-image: url(/static/images/bb-icon.png);
+  background-repeat: no-repeat;
+  background-position: left;
+  background-size: 18px;
+  top: 3px;
+  left: 3px;
 }
 
 body #blitzPointer {

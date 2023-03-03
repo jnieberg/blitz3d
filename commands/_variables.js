@@ -399,7 +399,7 @@ var _mouseXPosition = 0;
 var _mouseYPosition = 0;
 var _mouseHitTimes = [];
 var _mouseDownThis = null;
-var _mouseDownCheck = null;
+// var _mouseDownCheck = null;
 /**
  * @type {NodeJS.Timer}
  */
@@ -453,3 +453,7 @@ var _seedRndFn = null;
 _seedrnd(_seedRndNumber);
 
 var _delayTimer = undefined;
+/**
+ * @type {number}
+ */
+var _asyncTimer = _millisecs();

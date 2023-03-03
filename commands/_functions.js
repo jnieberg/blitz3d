@@ -16,7 +16,7 @@ function _loadScreen(xOff, yOff, buffer = _currentGraphicsBuffer) {
   if (!_backupScreenImg) {
     _saveScreen(buffer);
   }
-  _cls(buffer);
+  _cls(buffer, false);
   buffer.context.putImageData(_backupScreenImg, x, y);
 }
 
@@ -125,18 +125,18 @@ function _string2int(numString) {
 // 	return parseInt((_reverseString(string).match(/[\w\W]/g) || []).map((result, index) => _hex(result.charCodeAt(0) || 0, 2)).join(''), 16);
 // }
 
-var _asyncTimer = _millisecs();
 function _async() {
-  const timer = _millisecs();
-  //if (timer - _asyncTimer >= 1000 / 60) {
+  // if (_millisecs() - _asyncTimer >= 0) {
   return new Promise((resolve, reject) => {
-    _asyncTimer = timer;
+    // _asyncTimer = _millisecs();
     _flipSync = true;
-    setTimeout(() => resolve(1));
+    setTimeout(() => {
+      resolve(1);
+    });
   });
-  //} else {
-  //  return 1;
-  //}
+  // } else {
+  //   return 1;
+  // }
 }
 
 /**
@@ -226,7 +226,7 @@ function _dimGetIndex(dimensions, position) {
  * @param {string | number} val
  */
 function _tofloat(val) {
-  return typeof val === "string" || typeof val === "number" || typeof val === "undefined" ? new _Float(val) : val;
+  return typeof val !== "string" && typeof val !== "object" ? new _Float(val) : val;
 }
 
 /**
@@ -234,7 +234,7 @@ function _tofloat(val) {
  */
 function _tostring(val) {
   if (typeof val === "undefined") return "";
-  return typeof val === "string" || typeof val === "number" ? `${val}` : val;
+  return typeof val !== "number" && typeof val !== "object" ? `${val}` : val;
 }
 
 /**
@@ -242,7 +242,7 @@ function _tostring(val) {
  */
 function _toint(val) {
   if (typeof val === "undefined") return 0;
-  return typeof val === "string" || typeof val === "number" ? parseInt(`${val}`) : val;
+  return typeof val !== "string" && typeof val !== "object" ? parseInt(`${val}`) : val;
 }
 
 class _Float {

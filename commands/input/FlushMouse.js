@@ -4,5 +4,5 @@ function _flushmouse() {
   _waitMouseEvent = undefined;
   _mouseHitTimes = [];
   _mouseDownThis = null;
-  _mouseDownCheck = null;
+  // _mouseDownCheck = null;
 }

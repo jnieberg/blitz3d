@@ -6,7 +6,7 @@ const blitzTestData = [
   {
     name: "goto",
     bb: requireBB("goto"),
-    js: `___label2:while(await _async()){___label1:while(await _async()){var label1;var label2;__label1_:while(await _async()){_cls();_print("The program starts ...");await _delay(1000);break;_print("This line never gets printed ..");_end();break;}break;}__label2_:while(await _async()){_print("We just jumped here!");while(await _async()&&(!_keyhit(1))){}continue ___label2;break;}break;}`,
+    js: `_label1:{var label1;var label2;_print("The program starts ...");await _delay(1000);}_label1:while(await _async()){_label2:{_cls();await _delay(1000);_print("Entering the goto loop ...");await _delay(1000);break _label2;_print("This line never gets printed ..");_end();}_label2:while(await _async()){_print("We just jumped here!");while(await _async()&&(!_keyhit(1))){}continue _label1;_print("This line never gets printed either ..");break;}break;}`,
   },
   {
     name: "if then",
@@ -66,7 +66,7 @@ const blitzTestData = [
   {
     name: "gamma",
     bb: requireBB("gamma"),
-    js: `var _n;var _k;_graphics(640,480,16,1);_setbuffer(_backbuffer());_n=0;while(await _async()&&(!_keyhit(1))){if(_keydown(203)&&_toint(_n)>0){_n=_toint(_n)-1;}if(_keydown(205)&&_toint(_n)<255){_n=_toint(_n)+1;}if(_keydown(29)){_setgammared(_toint(_n));}else{_setgammaintensity(_toint(_n));}_cls();_seedrnd(1234);for(_k=1;_k<=1000;_k+=1){_color(_rnd(255),_rnd(255),_rnd(255));_rect(_rnd(640),_rnd(480),_rnd(64),_rnd(64));}_text(0,0,"Intensity offset="+_toint(_n));_flip();}_end();async function _setgammared(_n){let _k;for(_k=0;_k<=255;_k+=1){_setgamma(_toint(_k),_toint(_k),_toint(_k),_toint(_k)+_toint(_n),0,0);}_updategamma();}async function _setgammaintensity(_n){let _k;for(_k=0;_k<=255;_k+=1){_setgamma(_toint(_k),_toint(_k),_toint(_k),_toint(_k)+_toint(_n),_toint(_k)+_toint(_n),_toint(_k)+_toint(_n));}_updategamma();}`,
+    js: `var _n;var _k;_graphics(640,480,16,1);_setbuffer(_backbuffer());_n=0;while(await _async()&&(!_keyhit(1))){if(_keydown(203)&&_toint(_n)>0){_n=_toint(_n)-1;}if(_keydown(205)&&_toint(_n)<255){_n=_toint(_n)+1;}if(_keydown(29)){await _setgammared(_toint(_n));}else{await _setgammaintensity(_toint(_n));}_cls();_seedrnd(1234);for(_k=1;_k<=1000;_k+=1){_color(_rnd(255),_rnd(255),_rnd(255));_rect(_rnd(640),_rnd(480),_rnd(64),_rnd(64));}_text(0,0,"Intensity offset="+_toint(_n));_flip();}_end();async function _setgammared(_n){var _k;for(_k=0;_k<=255;_k+=1){_setgamma(_toint(_k),_toint(_k),_toint(_k),_toint(_k)+_toint(_n),0,0);}_updategamma();}async function _setgammaintensity(_n){var _k;for(_k=0;_k<=255;_k+=1){_setgamma(_toint(_k),_toint(_k),_toint(_k),_toint(_k)+_toint(_n),_toint(_k)+_toint(_n),_toint(_k)+_toint(_n));}_updategamma();}`,
   },
   {
     name: "shr",
@@ -81,12 +81,12 @@ const blitzTestData = [
   {
     name: "dim",
     bb: requireBB("dim"),
-    js: `var _grid;var _y;var _x;var _grid=_dim(10,10);for(_y=0;_y<=10;_y+=1){for(_x=0;_x<=10;_x+=1){_grid[Math.trunc(_toint(_x))][Math.trunc(_toint(_y))]=_rand(10,99);}}for(_y=0;_y<=10;_y+=1){for(_x=0;_x<=10;_x+=1){_text(_toint(_x)*40,_toint(_y)*20,_grid[Math.trunc(_toint(_x))][Math.trunc(_toint(_y))]);}}`,
+    js: `var _y;var _x;var _grid=_dim(10,10);for(_y=0;_y<=10;_y+=1){for(_x=0;_x<=10;_x+=1){_grid[Math.trunc(_toint(_x))][Math.trunc(_toint(_y))]=_rand(10,99);}}for(_y=0;_y<=10;_y+=1){for(_x=0;_x<=10;_x+=1){_text(_toint(_x)*40,_toint(_y)*20,_grid[Math.trunc(_toint(_x))][Math.trunc(_toint(_y))]);}}`,
   },
   {
     name: "data",
     bb: requireBB("data"),
-    js: `_data("startdata",3,"Shane",31,33.3333,"Monroe","Bob",28,12.25,"Smith","Roger",54,66.66,"Rabbit");var startdata;var _users;var _t;var _firstname;var _age;var _accuracy;var _lastname;_print("Here we go!");_restore("startdata");_users=_read(_toint(_users));for(_t=1;_t<=_toint(_users);_t+=1){_firstname=_read(_tostring(_firstname));_age=_read(_toint(_age));_accuracy=_read(_tofloat(_accuracy));_lastname=_read(_tostring(_lastname));_print(_tostring(_firstname)," ",_tostring(_lastname)," is ",_toint(_age)," years old with ",_tofloat(_accuracy)," accuracy!");}while(await _async()&&(!_keyhit(1))){}_end();`,
+    js: `var _startdata;var _users;var _t;var _firstname;var _age;var _accuracy;var _lastname;_data("_startdata",3,"Shane",31,33.3333,"Monroe","Bob",28,12.25,"Smith","Roger",54,66.66,"Rabbit");_print("Here we go!");_restore("_startdata");_users=_read(_toint(_users));for(_t=1;_t<=_toint(_users);_t+=1){_firstname=_read(_tostring(_firstname));_age=_read(_toint(_age));_accuracy=_read(_tofloat(_accuracy));_lastname=_read(_tostring(_lastname));_print(_tostring(_firstname)," ",_tostring(_lastname)," is ",_toint(_age)," years old with ",_tofloat(_accuracy)," accuracy!");}while(await _async()&&(!_keyhit(1))){}_end();`,
   },
 ];
 

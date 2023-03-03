@@ -10,8 +10,8 @@ function _mousedown(button) {
   if (_mouseDownThis) {
     const mouseIndex = [0, 1, 3, 2];
     const res = button === mouseIndex[_mouseDownThis.which || _mouseDownThis.button + 1 || 0];
-    _mouseDownCheck = null;
-    return res;
+    // _mouseDownCheck = null;
+    return res ? 1 : 0;
   }
-  return false;
+  return 0;
 }

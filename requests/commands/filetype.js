@@ -1,10 +1,11 @@
 import { statSync } from "fs";
 import { resolve } from "path";
+import { folder } from "../folder.js";
 
 export function fn(res, query) {
   try {
-    const folder = resolve("./" + query.root + "/" + query.filename);
-    if (statSync(folder).isDirectory()) {
+    const fol = resolve(folder.shared + "/" + query.folder + "/" + query.filename);
+    if (statSync(fol).isDirectory()) {
       res.end("2");
     } else {
       res.end("1");

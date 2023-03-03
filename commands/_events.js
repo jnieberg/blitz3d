@@ -13,8 +13,8 @@ window.onload = () => {
         _mouseXPosition += _mouseXSpeedOffset;
         _mouseYPosition += _mouseYSpeedOffset;
       } else {
-        _mouseXPosition = event.x - _eventCanvas.offsetLeft;
-        _mouseYPosition = event.y - _eventCanvas.offsetTop;
+        _mouseXPosition = (_eventCanvas.width / window.innerWidth) * event.x - _eventCanvas.offsetLeft;
+        _mouseYPosition = (_eventCanvas.height / window.innerHeight) * event.y - _eventCanvas.offsetTop;
       }
       _mouseXPosition = _mouseXPosition < 0 ? 0 : _mouseXPosition > _eventCanvas.width ? _eventCanvas.width : _mouseXPosition;
       _mouseYPosition = _mouseYPosition < 0 ? 0 : _mouseYPosition > _eventCanvas.height ? _eventCanvas.height : _mouseYPosition;

@@ -19,7 +19,7 @@
 
   <body <%if(file) {%>
     class="started"<%}%>>
-    <div id="blitzFolder"></div>
+    <div id="blitzFolder"><%- folder%></div>
     <img src="/static/images/mouse.png" id="blitzPointer" width="24" height="24" class="hide" />
     <div id="workingspace" onclick="window.location.reload()"></div>
     <canvas id="blitz" <%if(!file) {%>onclick="getBB(document.querySelector('#blitzInput').innerText)"<%}%>></canvas>
@@ -116,7 +116,7 @@
       });
     </script>
     <%} else {%>
-    <script id="output" src="/<%= file %>.bb.js"></script>
+    <script id="output" src="/<%= file %>.js"></script>
     <%}%>
   </body>
 </html>

@@ -9,6 +9,7 @@ import { folder } from "./requests/folder.js";
 import { getRequest } from "./requests/getRequest.js";
 import { postRequest } from "./requests/postRequest.js";
 import { systemCommands } from "./commands.js";
+import { parseFolder } from "./requests/parseFolder.js";
 
 const portDefault = 3001;
 const port = process.env.PORT || portDefault;
@@ -79,12 +80,13 @@ const server = app
     res.writeHead(status.ok, { "Content-Type": "text/javascript" });
     res.end(parseBB({ bb: decode(bb) }));
   })
-  .get(["/", "/*.bb"], (req, res) => {
-    const fileFull = req.params["0"] || "";
+  .get(["/*"], (req, res) => {
+    const fileFull = req.params["0"].slice(-3) === ".bb" ? req.params["0"] : "";
     const currentFolder = fileFull.replace(/^(.*?)([^/]*?)$/, "$1");
     process.chdir(`${folder.shared}/${currentFolder}`);
+    const parsedFolder = parseFolder(req, res);
     let html = readFileSync(`${folder.static}/html/index.html`).toString();
-    html = ejs.render(html, { file: fileFull });
+    html = ejs.render(html, { file: fileFull, folder: parsedFolder });
     res.writeHead(status.ok, { "Content-Type": "text/html" });
     res.end(html);
   })

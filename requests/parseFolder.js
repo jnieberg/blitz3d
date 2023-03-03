@@ -47,13 +47,13 @@ export function parseFolder(req, res) {
     }
     files.forEach((file) => {
       const href = normalize(`${url}/${file}`).replace(/\\/g, "/");
-      let type = "file";
-      if (statSync(dir + "/" + file).isDirectory()) {
-        type = "folder";
-      }
-      result[type].push(`<li><a href="${href}" class="${type}">${file}</a></li>`);
+      let /** @type {"file"|"folder"} */ type = "file";
+      let subtype = "";
+      if (statSync(dir + "/" + file).isDirectory()) type = "folder";
+      subtype = file.match(/(?<=\.)[^.\n]*?$/m)?.[0] || "";
+      result[type].push(`<li><a href="${href}" class="${type}${subtype ? ` file--${subtype}` : ""}">${file}</a></li>`);
     });
-    return `<a class="reload" href="/reload" alt="Reload page" title="Reload page">↺</a>
+    return `<a class="reload" alt="Reload page" title="Reload page" onclick="window.location.reload()">↺</a>
 <ul>
 	${result.folder.join("")}
 	${result.file.join("")}

@@ -1,0 +1,51 @@
+body {
+  color: #ffffff;
+  font: 12pt verdana;
+  line-height: 18pt;
+  background: #003d78;
+}
+
+h1:first-child {
+  margin-top: 0;
+}
+
+h1 {
+  margin: 48px 0 24px;
+  font: bold 14pt verdana;
+}
+
+ul {
+  margin: 0px 24px;
+  padding: 0;
+}
+
+li {
+  list-style: none;
+}
+
+table {
+  font: 12pt verdana;
+  background: #003566;
+  width: 100%;
+}
+
+a {
+  color: #fff000;
+  font: 12pt verdana;
+  line-height: 18pt;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #fff000;
+  font: 12pt verdana;
+  line-height: 18pt;
+  background: #0088ee;
+  text-decoration: none;
+}
+
+pre.code {
+  color: #44ff00;
+  background: #000000;
+  margin: 8px;
+}

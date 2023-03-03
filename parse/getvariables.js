@@ -1,5 +1,8 @@
 const reservedWords = [
   "await",
+  "continue",
+  "break",
+
   "after",
   "and",
   "before",
@@ -79,7 +82,7 @@ export const getVariables = (/** @type {string} */ bb, /** @type {string} */ all
   });
   variables = variables.filter((v, i) => {
     if (!isAvailableWord(v)) return false;
-    const vRx = new RegExp(`(?:\\b(?:global|local|const|\\\\)\\b).*?\\b${v}(_${types[i] || ""})?\\b`, "gim");
+    const vRx = new RegExp(`(?<=\\b(?:global|local|const|\\\\|_dim)\\b.*?)\\b${v}(_[sfi])?\\b`, "gim");
     return variables.indexOf(v) === i && bb.search(vRx) === -1 && all.search(vRx) === -1;
   });
   return variables; //`${variables.map((v) => `global ${v}`).join("\n")}\n${bb}`;

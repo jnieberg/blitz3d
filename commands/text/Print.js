@@ -1,12 +1,12 @@
 function _print1(/** @type {_Float | boolean | number | string} */ txt = "", /** @type {boolean} */ fix = false, buffer = _frontbuffer()) {
   if (buffer.context) {
-    if (txt instanceof _Float) {
-      txt = txt.float;
-    } else if (typeof txt === "number") {
-      if (txt.toString().indexOf(".") > -1) {
-        txt = _roundFloat(txt);
-      }
-    }
+    // if (txt instanceof _Float) {
+    //   txt = txt.float;
+    // } else if (typeof txt === "number") {
+    //   if (txt.toString().indexOf(".") > -1) {
+    //     txt = _roundFloat(txt);
+    //   }
+    // }
     if (!fix && _printY + _setFontCurrent.height * 0.5 > buffer.canvas.height) {
       _saveScreen(buffer);
       _loadScreen(0, -_setFontCurrent.height, buffer);

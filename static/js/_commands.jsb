@@ -399,7 +399,7 @@ var _mouseXPosition = 0;
 var _mouseYPosition = 0;
 var _mouseHitTimes = [];
 var _mouseDownThis = null;
-var _mouseDownCheck = null;
+// var _mouseDownCheck = null;
 /**
  * @type {NodeJS.Timer}
  */
@@ -453,6 +453,10 @@ var _seedRndFn = null;
 _seedrnd(_seedRndNumber);
 
 var _delayTimer = undefined;
+/**
+ * @type {number}
+ */
+var _asyncTimer = _millisecs();
 
 /**
  * @type {ImageData}
@@ -472,7 +476,7 @@ function _loadScreen(xOff, yOff, buffer = _currentGraphicsBuffer) {
   if (!_backupScreenImg) {
     _saveScreen(buffer);
   }
-  _cls(buffer);
+  _cls(buffer, false);
   buffer.context.putImageData(_backupScreenImg, x, y);
 }
 
@@ -581,18 +585,18 @@ function _string2int(numString) {
 // 	return parseInt((_reverseString(string).match(/[\w\W]/g) || []).map((result, index) => _hex(result.charCodeAt(0) || 0, 2)).join(''), 16);
 // }
 
-var _asyncTimer = _millisecs();
 function _async() {
-  const timer = _millisecs();
-  //if (timer - _asyncTimer >= 1000 / 60) {
+  // if (_millisecs() - _asyncTimer >= 0) {
   return new Promise((resolve, reject) => {
-    _asyncTimer = timer;
+    // _asyncTimer = _millisecs();
     _flipSync = true;
-    setTimeout(() => resolve(1));
+    setTimeout(() => {
+      resolve(1);
+    });
   });
-  //} else {
-  //  return 1;
-  //}
+  // } else {
+  //   return 1;
+  // }
 }
 
 /**
@@ -682,7 +686,7 @@ function _dimGetIndex(dimensions, position) {
  * @param {string | number} val
  */
 function _tofloat(val) {
-  return typeof val === "string" || typeof val === "number" || typeof val === "undefined" ? new _Float(val) : val;
+  return typeof val !== "string" && typeof val !== "object" ? new _Float(val) : val;
 }
 
 /**
@@ -690,7 +694,7 @@ function _tofloat(val) {
  */
 function _tostring(val) {
   if (typeof val === "undefined") return "";
-  return typeof val === "string" || typeof val === "number" ? `${val}` : val;
+  return typeof val !== "number" && typeof val !== "object" ? `${val}` : val;
 }
 
 /**
@@ -698,7 +702,7 @@ function _tostring(val) {
  */
 function _toint(val) {
   if (typeof val === "undefined") return 0;
-  return typeof val === "string" || typeof val === "number" ? parseInt(`${val}`) : val;
+  return typeof val !== "string" && typeof val !== "object" ? parseInt(`${val}`) : val;
 }
 
 class _Float {
@@ -760,8 +764,8 @@ window.onload = () => {
         _mouseXPosition += _mouseXSpeedOffset;
         _mouseYPosition += _mouseYSpeedOffset;
       } else {
-        _mouseXPosition = event.x - _eventCanvas.offsetLeft;
-        _mouseYPosition = event.y - _eventCanvas.offsetTop;
+        _mouseXPosition = (_eventCanvas.width / window.innerWidth) * event.x - _eventCanvas.offsetLeft;
+        _mouseYPosition = (_eventCanvas.height / window.innerHeight) * event.y - _eventCanvas.offsetTop;
       }
       _mouseXPosition = _mouseXPosition < 0 ? 0 : _mouseXPosition > _eventCanvas.width ? _eventCanvas.width : _mouseXPosition;
       _mouseYPosition = _mouseYPosition < 0 ? 0 : _mouseYPosition > _eventCanvas.height ? _eventCanvas.height : _mouseYPosition;
@@ -1411,8 +1415,11 @@ async function _readfile(filename) {
 async function _readdir(directory = "") {
   let path = _normalizeFile(directory);
   const dir = await _postCommand("readdir", { folder: path });
-  _readDirList[dir.folder] = dir;
-  return _readDirList[dir.folder];
+  if (dir !== "0") {
+    _readDirList[dir.folder] = dir;
+    return _readDirList[dir.folder];
+  }
+  return 0;
 }
 
 function _readbytes(bank, stream, offset, count) { // from stream to bank
@@ -1459,13 +1466,13 @@ function _rset(string, length) {
 }
 function _print1(/** @type {_Float | boolean | number | string} */ txt = "", /** @type {boolean} */ fix = false, buffer = _frontbuffer()) {
   if (buffer.context) {
-    if (txt instanceof _Float) {
-      txt = txt.float;
-    } else if (typeof txt === "number") {
-      if (txt.toString().indexOf(".") > -1) {
-        txt = _roundFloat(txt);
-      }
-    }
+    // if (txt instanceof _Float) {
+    //   txt = txt.float;
+    // } else if (typeof txt === "number") {
+    //   if (txt.toString().indexOf(".") > -1) {
+    //     txt = _roundFloat(txt);
+    //   }
+    // }
     if (!fix && _printY + _setFontCurrent.height * 0.5 > buffer.canvas.height) {
       _saveScreen(buffer);
       _loadScreen(0, -_setFontCurrent.height, buffer);
@@ -1742,15 +1749,15 @@ function _mousedown(button) {
   if (_mouseDownThis) {
     const mouseIndex = [0, 1, 3, 2];
     const res = button === mouseIndex[_mouseDownThis.which || _mouseDownThis.button + 1 || 0];
-    _mouseDownCheck = null;
-    return res;
+    // _mouseDownCheck = null;
+    return res ? 1 : 0;
   }
-  return false;
+  return 0;
 }
 
 function _millisecs() {
-	var date = new Date();
-	return date.getTime();
+  var date = new Date();
+  return date.getTime();
 }
 
 function _midhandle(image) {
@@ -2025,10 +2032,8 @@ function _keydown(code) {
 }
 
 function _int(str) {
-	var result = typeof str === 'string' ?
-		parseInt(str, 10) :
-		Math.round(str);
-	return isNaN(result) ? 0 : result;
+  var result = typeof str === "string" ? parseInt(str, 10) : Math.floor(str);
+  return isNaN(result) ? 0 : result;
 }
 
 function _instr(string1, string2, offset = 1) {
@@ -2295,22 +2300,24 @@ function _graphicsCreate(width, height, id, mode = -1) {
   buffer.transform21 = 0.0;
   buffer.transform12 = 0.0;
   buffer.transform22 = 1.0;
+  // if (id === "_front") {
+  buffer.context.restore();
+  buffer.context.save();
   if (id === "_front") {
-    buffer.context.restore();
-    buffer.context.save();
-    if (mode === 1) {
-      document.querySelector("#blitz").classList.add("full");
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      buffer.canvas.width = w;
-      buffer.canvas.height = h;
-      buffer.context.scale(w / width, h / height);
-    } else if (mode === 0 || mode === 2 || mode === 3) {
-      buffer.canvas.width = width;
-      buffer.canvas.height = height;
-      document.querySelector("#blitz").classList.remove("full");
-    }
+    if (mode === 1) document.body.classList.add("full");
+    else document.body.classList.remove("full");
   }
+  //   const w = window.innerWidth;
+  //   const h = window.innerHeight;
+  //   buffer.canvas.width = w;
+  //   buffer.canvas.height = h;
+  //   buffer.context.scale(w / width, h / height);
+  // } else if (mode === 0 || mode === 2 || mode === 3) {
+  buffer.canvas.width = width;
+  buffer.canvas.height = height;
+  // buffer.canvas.classList.remove("full");
+  // }
+  // }
   // buffer.context.filter =
   //   "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxmaWx0ZXIgaWQ9ImZpbHRlciIgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIj48ZmVDb21wb25lbnRUcmFuc2Zlcj48ZmVGdW5jUiB0eXBlPSJpZGVudGl0eSIvPjxmZUZ1bmNHIHR5cGU9ImlkZW50aXR5Ii8+PGZlRnVuY0IgdHlwZT0iaWRlbnRpdHkiLz48ZmVGdW5jQSB0eXBlPSJkaXNjcmV0ZSIgdGFibGVWYWx1ZXM9IjAgMSIvPjwvZmVDb21wb25lbnRUcmFuc2Zlcj48L2ZpbHRlcj48L3N2Zz4=#filter)"; // SLOOOOOW
   buffer.context.textBaseline = "top";
@@ -2467,7 +2474,7 @@ function _flushmouse() {
   _waitMouseEvent = undefined;
   _mouseHitTimes = [];
   _mouseDownThis = null;
-  _mouseDownCheck = null;
+  // _mouseDownCheck = null;
 }
 
 function _flushkeys() {
@@ -2509,8 +2516,8 @@ const _first = (/** @type {any} */ obj) => {
 
 async function _filetype(filename) {
   const path = _normalizeFile(filename);
-  const folder = path.replace(/^(.*[\/\\])(.*?)$/, "$1");
-  const file = path.replace(/^(.*[\/\\])(.*?)$/, "$2");
+  const folder = path.replace(/^(.*[/\\])(.*?)$/, "$1");
+  const file = path.replace(/^(.*[/\\])(.*?)$/, "$2");
   return _readDirList[folder] && _readDirList[folder].file && _readDirList[folder].file.find((res) => res.name === file)
     ? _readDirList[folder].file.find((res) => res.name === file).type
     : Number(await _postCommand("filetype", { folder: folder, filename: file }));
@@ -2879,13 +2886,15 @@ function _clscolor(r, g, b) {
 	_clsColorRGB = 'rgb(' + r + ', ' + g + ', ' + b + ')';
 }
 
-function _cls(buffer = _currentGraphicsBuffer) {
+function _cls(buffer = _currentGraphicsBuffer, resetCursor = true) {
   if (buffer.context && !buffer.locked) {
     buffer.context.fillStyle = _clsColorRGB;
     buffer.context.fillRect(0, 0, buffer.canvas.width, buffer.canvas.height);
-    _printX = 0;
-    _printY = 0;
-    _writeX = 0;
+    if (resetCursor) {
+      _printX = 0;
+      _printY = 0;
+      _writeX = 0;
+    }
   }
 }
 
@@ -2932,7 +2941,7 @@ function _channelpan(channel, pan) {
 }
 async function _changedir(directory) {
   const path = _normalizeFile(directory);
-  const result = await _postCommand("file/changedir", { directory: path });
+  const result = await _postCommand("changedir", { directory: path });
   if (result !== 0) {
     _currentDirCached = result;
   }

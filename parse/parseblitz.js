@@ -5,6 +5,7 @@ import { getVariables, isAvailableWord } from "./getvariables.js";
 import { getGlobal } from "./getglobal.js";
 import { getProperties } from "./getproperties.js";
 import { readFileSync } from "fs";
+import { findClosestBrackets } from "./findClosestBrackets.js";
 
 const stringReplacer = "___";
 const stringReplacerRx = /___(\d+)___/;
@@ -21,7 +22,7 @@ const parseIncludes = (/** @type {string} */ bb) => {
     try {
       include = readFileSync(m1).toString();
     } catch (err) {}
-    return include;
+    return parseIncludes(include);
   });
   return bb;
 };
@@ -49,6 +50,8 @@ const cleanup = (/** @type {string} */ bb) => {
     .replace(/ *\) *(?=\w)/g, ") ")
     .replace(/\r/g, "")
     .replace(/ *\n+ */g, "\n")
+    .replace(/^([\w\W]*?)$/, "\n$1\n")
+    .replace(/(?<=\bfunction\b.*?\n)([\w\W]*?)(?=\bend function\b)/gim, "\n$1\n")
     .replace(/ *\bNot\b */gim, "!")
     .replace(/\bElse +If\b/gi, "ElseIf")
     .replace(
@@ -75,12 +78,11 @@ const cleanup = (/** @type {string} */ bb) => {
 };
 
 const parseTypes = (/** @type {string} */ bb) => {
-  // bb = bb.replace(/(?<=\b(global|local)\b.*?),/gim, "\n$1 ");
   const variables = Array.from(new Set(bb.match(/(\b[a-z]\w*?\b)[$#%]/gi)));
   variables.forEach((variable) => {
     const v = variable.slice(0, -1);
     const t = variable.slice(-1);
-    const varRx = new RegExp(`(\\b${v}\\b[$#%]?)(?![$#%])`, "gim"); //(?<!^(?:function|local|global) .*?)
+    const varRx = new RegExp(`(\\b${v}\\b[$#%]?)(?![$#%])`, "gim");
     if (t === "#") bb = bb.replace(varRx, `${v}_f`);
     else if (t === "$") bb = bb.replace(varRx, `${v}_s`);
     else if (t === "%") bb = bb.replace(varRx, `${v}_i`);
@@ -96,8 +98,10 @@ const findCommands = (/** @type {string} */ bb) => {
     .concat(customFunctions)
     .sort((a, b) => (a < b ? 1 : -1));
   commands.forEach((systemCommandName) => {
-    const cmdRx = new RegExp(`\\b${systemCommandName}(_[sfi])?\\b`, "gim"); //.replace(/\$/gm, "\\$")
-    const async = systemCommands[systemCommandName]?.async || false;
+    const fnRx = new RegExp(`\\b${systemCommandName}(_[sfi])?\\b`, "gim"); //functions and their calls
+    const cmdRx = new RegExp(`(?<!function )\\b_${systemCommandName}(_[sfi])?\\b`, "gim"); // calls only
+    const async = systemCommands[systemCommandName] ? systemCommands[systemCommandName].async : true;
+    bb = bb.replace(fnRx, `_${systemCommandName.toLowerCase()}`);
     bb = bb.replace(cmdRx, `${async ? "await " : ""}_${systemCommandName.toLowerCase()}`);
     // }
   });
@@ -122,11 +126,65 @@ ${functions
   .map((fn) => {
     const variables = getVariables(fn[1], getGlobal(bb)).filter((variable) => getProperties(fn[0]).indexOf(variable) === -1);
     return `${fn[0]}
-${variables.map((v) => `local ${v}`).join("\n")}
+${variables.map((v) => `global ${v}`).join("\n")}
 ${fn[1]}
 ${fn[2]}`;
   })
   .join("\n")}`;
+};
+
+const parseDims = (/** @type {string} */ bb) => {
+  // change dim command into a _dim() function
+  bb = bb.replace(
+    /\b_dim\(([_a-z]\w*?)\((?<=\()([^)(]*(?:\([^)(]*(?:\([^)(]*(?:\([^)(]*\)[^)(]*)*\)[^)(]*)*\)[^)(]*)*)(?=\))\)\)/gim,
+    "global $1=_dim($2)"
+  );
+  // search DIM
+  const dims = Array.from(bb.matchAll(/(\b[a-z]\w*?)=_dim\(/gim));
+  dims.map((d) => {
+    const variable = d[1];
+    // const dimensions = d[2];
+    const dimRx = new RegExp(
+      `(?<!_dim\\()\\b(${variable})\\((?<=\\()([^)(]*(?:\\([^)(]*(?:\\([^)(]*(?:\\([^)(]*\\)[^)(]*)*\\)[^)(]*)*\\)[^)(]*)*)(?=\\))\\)`,
+      "gim"
+    );
+    bb = bb.replace(dimRx, (m, m1, m2) => {
+      return `${m1}[Math.trunc(${m2.replace(/,(?![^()]*(?:\([^()]*\))?\))/g, ")][Math.trunc(")})]`;
+    });
+  });
+  return bb;
+};
+
+const setGoto = (/** @type {string} */ bb, /** @type {string} */ label, /** @type {boolean} */ isStart = false) => {
+  const gotoRx = new RegExp(`\\bgoto (${label})\\b`, "gi");
+  if (isStart) bb = bb.replace(gotoRx, "break _$1");
+  else bb = bb.replace(gotoRx, "continue _$1");
+  return bb;
+};
+
+const setLabels = (/** @type {string} */ bb) => {
+  const bbRx = /^\.[a-z]\w*?$/gim;
+  let found;
+  while ((found = findClosestBrackets(bb, bbRx))) {
+    const label = found[2].substring(1);
+    bb = `${found[0]}
+_${label}: {${setGoto(found[1], label, true)}}
+_${label}: while(await _async()) {${setGoto(found[3], label)}break
+}
+${found[4]}`;
+  }
+
+  return bb;
+};
+
+// data blocks
+const setData = (/** @type {string} */ bb) => {
+  bb = bb
+    .replace(/^\.([a-z]\w*?)((?:\n_data\(.*?\))+)/gim, '_data("$1",$2)')
+    .replace(/,?\n_data\((.*?)\)/gi, ",$1")
+    .replace(/^_restore\((.*?)\)$/gim, '_restore("$1")')
+    .replace(/^([\w\W]*?)((?:\n_data\(.*?\))+)/gi, "$2\n$1");
+  return bb;
 };
 
 const parseStatements = (/** @type {string} */ bb) => {
@@ -146,30 +204,6 @@ const parseStatements = (/** @type {string} */ bb) => {
     .replace(/ *\bshr\b */gim, ">>")
     .replace(/ *\bsar\b */gim, ">>>")
 
-    // data blocks
-    .replace(/^\.([a-z]\w*?)((?:\n_data\(.*?\))+)/gim, '_data("$1",$2)')
-    .replace(/,?\n_data\((.*?)\)/gi, ",$1")
-    .replace(/^_restore\((.*?)\)$/gim, '_restore("$1")')
-    .replace(/^([\w\W]*?)((?:\n_data\(.*?\))+)/gi, "$2\n$1");
-
-  // tricky "label"s and loopy "goto"s
-  bb = bb.replace(/(\n\.([a-z]\w*?)\n[\w\W]*?)(\n\.([a-z]\w*?)\n[\w\W]*?)\bgoto \2\b/gi, "$1$3continue ___$4");
-  bb = bb.replace(/(\n\.([a-z]\w*?)\n[\w\W]*?)\bgoto \2\b/gi, "$1continue ___$2");
-  bb = bb.replace(/\bgoto ([a-z]\w*?)\b(\n[\w\W]*?\.\1)/gi, "break$2");
-
-  while (bb.match(/^\.([a-z]\w*?\b)/gim)) {
-    bb = bb
-      .replace(
-        /(?<=function.*?\n)([\w\W]*?)\n\.([a-z]\w*?\b)([\w\W]*?)(?=(\n\.[a-z]|(?:end)?function).*?\n|$)/gi,
-        "___$2: while(await _async()) {\n$1\n__$2_: while(await _async()) {$3\nbreak\n}\nbreak\n}\n"
-      )
-      .replace(
-        /^([\w\W]*?)\n\.([a-z]\w*?\b)([\w\W]*?)(?=(\n\.[a-z]|(?:end)?function).*?\n|$)/gi,
-        "___$2: while(await _async()) {\n$1\n__$2_: while(await _async()) {$3\nbreak\n}\nbreak\n}\n"
-      );
-  }
-
-  bb = bb
     // for conditional expressions, change single = & | into doubles == && ||, and <> into != (not).
     .replace(/(?<=(?:^(?:if|elseif|while|until|return|case)\b|^[a-z]\w*?=).*?)(?<![=&|<>!])([=&|])(?![=&|<>])/gim, "$1$1")
     .replace(/(?<=(?:^(?:if|elseif|while|until|return|case)\b|^[a-z]\w*?=).*?)<>/gim, "!=")
@@ -205,7 +239,7 @@ const parseStatements = (/** @type {string} */ bb) => {
     .replace(/^local\b/gim, "let")
 
     // change various BB "for" statements into javascript "for"
-    .replace(/^for\b *(.+?)=(.+?) *\bto\b *(.+?)(?: *\bstep\b *(.+?))$/gim, "for($1=$2;$1<=$3;$1=$1+$4) {")
+    .replace(/^for\b *(.+?)=(.+?) *\bto\b *(.+?)(?: *\bstep\b *(.+?))$/gim, "for($1=$2;$1!=$3+$4;$1=$1+$4) {")
     .replace(/^for\b *(.+?)=(.+?) *\bto\b *(.+?)$/gim, "for($1=$2;$1<=$3;$1+=1) {")
 
     //for room.chair=each chair
@@ -220,31 +254,6 @@ const parseStatements = (/** @type {string} */ bb) => {
     // some exception commands should get a return variable
     .replace(/\b_(delete|insert)\b\(([a-z]\w*?\b)/gim, "$2=_$1($2,");
 
-  // make all function calls "await"-ing
-  // .replace(/(?<!\bnew |\bfunction |\.)\b(_[a-z]\w*?)\b(?=\()/gim, "await $1");
-
-  return bb;
-};
-
-const parseDims = (/** @type {string} */ bb) => {
-  // change dim command into a _dim() function
-  bb = bb.replace(
-    /\b_dim\(([_a-z]\w*?)\((?<=\()([^)(]*(?:\([^)(]*(?:\([^)(]*(?:\([^)(]*\)[^)(]*)*\)[^)(]*)*\)[^)(]*)*)(?=\))\)\)/gim,
-    "var $1=_dim($2)"
-  );
-  // search DIM
-  const dims = Array.from(bb.matchAll(/(\b[a-z]\w*?)=_dim\(/gim));
-  dims.map((d) => {
-    const variable = d[1];
-    // const dimensions = d[2];
-    const dimRx = new RegExp(
-      `(?<!_dim\\()\\b(${variable})\\((?<=\\()([^)(]*(?:\\([^)(]*(?:\\([^)(]*(?:\\([^)(]*\\)[^)(]*)*\\)[^)(]*)*\\)[^)(]*)*)(?=\\))\\)`,
-      "gim"
-    );
-    bb = bb.replace(dimRx, (m, m1, m2) => {
-      return `${m1}[Math.trunc(${m2.replace(/,(?![^()]*(?:\([^()]*\))?\))/g, ")][Math.trunc(")})]`;
-    });
-  });
   return bb;
 };
 
@@ -262,7 +271,10 @@ const parseVariables = (/** @type {string} */ bb) => {
     .filter((v) => !bb.match(new RegExp(`\\.${v}\\b`)));
   variables.forEach((v) => {
     const vRx = new RegExp(`\\b(${v})\\b`, "gim");
-    const tRx = new RegExp(`(?<!^(?:function|global|local|const|type) .*?|\\.|.*?")(\\b${v}\\b)(?![([]|\\.[a-z]\\w*?\\b|\\+?=|:)`, "gim");
+    const tRx = new RegExp(
+      `(?<!^(?:function|global|local|const|type|goto|gosub) .*?|\\.|.*?"|^)(\\b${v}\\b)(?![([]|\\.[a-z]\\w*?\\b|\\+?=|:)`,
+      "gim"
+    );
     const type = v.replace(/^[a-z].*?(?:_([sfi]))?$/gi, "$1");
     if (type === "s") bb = bb.replace(tRx, "_tostring($1)");
     else if (type === "f") bb = bb.replace(tRx, "_tofloat($1)");
@@ -309,11 +321,14 @@ export const parseBB = ({ bb, compact = false }) => {
   bb = cleanup(bb);
   bb = parseTypes(bb);
   ({ bb } = findCommands(bb));
+  bb = setData(bb);
   bb = setFunctionVariables(bb);
   bb = setGlobalVariables(bb);
   bb = parseDims(bb);
   bb = parseVariables(bb);
   bb = parseStatements(bb);
+  bb = setLabels(bb);
+
   bb = fixSyntax(bb);
   bb = applySemicolons(bb);
 

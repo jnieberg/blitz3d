@@ -1,4 +1,4 @@
 function _millisecs() {
-	var date = new Date();
-	return date.getTime();
+  var date = new Date();
+  return date.getTime();
 }
